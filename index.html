@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RESONANT — 3D Blade Configurator (Live Demo)</title>
+<meta name="description" content="Interactive 360° WebGL configurator for RESONANT table tennis blades: handle wood switch, exploded 5-ply view, handle butt inspection, live price and weight, 4K PNG export.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+} }
+</script>
+<style>
+:root{
+  --paper:#F5F3EE; --ink:#181715; --ink2:#5A564F; --rule:#D3CDC1; --tint:#ECE8DF; --tint2:#E3DED2;
+  --red:#D42B1E; --wood:#7A2822;
+  --sans:'IBM Plex Sans',system-ui,sans-serif; --head:'Space Grotesk','IBM Plex Sans',sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font:14px/1.45 var(--sans);overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- frame ---------- */
+#app{display:grid;grid-template-rows:auto 1fr;height:100vh;height:100dvh}
+header{display:flex;align-items:center;gap:24px;padding:0 20px;height:52px;border-bottom:1px solid var(--ink);background:var(--paper)}
+.brand{font:700 20px/1 var(--head);letter-spacing:.34em}
+.brand i{font-style:normal;color:var(--red)}
+.tag{font:500 11px/1 var(--mono);letter-spacing:.08em;color:var(--ink2);text-transform:uppercase}
+header nav{margin-left:auto;display:flex;gap:0}
+header nav a{font:600 12px/1 var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);text-decoration:none;padding:10px 14px;border:1px solid var(--ink)}
+header nav a.primary{background:var(--ink);color:var(--paper)}
+header nav a:hover{background:var(--red);border-color:var(--red);color:#fff}
+main{display:grid;grid-template-columns:minmax(0,1fr) 408px;min-height:0}
+
+/* ---------- stage ---------- */
+#stage{display:grid;grid-template-rows:minmax(0,1fr) auto;min-width:0;min-height:0;border-right:1px solid var(--ink)}
+#vwrap{position:relative;display:grid;grid-template-columns:0 minmax(0,1fr);min-height:0;transition:grid-template-columns .35s ease}
+#stage.split #vwrap{grid-template-columns:minmax(260px,34%) minmax(0,1fr)}
+#refs{overflow:auto;border-right:1px solid var(--ink);background:var(--tint);padding:0;visibility:hidden}
+#stage.split #refs{visibility:visible;padding:14px}
+#refs h3{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+#refs figure{margin-bottom:12px;border-top:1px solid var(--ink);padding-top:6px}
+#refs img{display:block;width:100%;max-height:230px;object-fit:contain;background:#fff}
+#refs figcaption{font:400 11.5px/1.4 var(--sans);color:var(--ink2);margin-top:4px}
+#refs figcaption b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+#view{position:relative;min-width:0;min-height:0;overflow:hidden;touch-action:none}
+#view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;outline:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;white-space:nowrap;font:500 11.5px/1.25 var(--mono);color:var(--ink);padding-left:30px;transform:translateY(-50%)}
+.lbl::before{content:"";position:absolute;left:0;top:50%;width:24px;border-top:1px solid var(--ink)}
+.lbl small{display:block;font:400 10.5px/1.3 var(--sans);color:var(--ink2)}
+.lbl.red{color:var(--red)} .lbl.red::before{border-color:var(--red)}
+#hud{position:absolute;left:14px;bottom:12px;right:14px;display:flex;justify-content:space-between;gap:14px;pointer-events:none;font:400 11px/1.3 var(--mono);color:var(--ink2)}
+#hud b{color:var(--ink);font-weight:500}
+#loading{position:absolute;inset:0;display:grid;place-items:center;font:500 12px var(--mono);letter-spacing:.08em;color:var(--ink2);text-transform:uppercase;background:var(--paper);z-index:3;transition:opacity .4s}
+#loading.off{opacity:0;pointer-events:none}
+#note{position:absolute;left:14px;top:12px;max-width:min(520px,70%);font:400 12px/1.4 var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--ink);padding:7px 10px;display:none;z-index:2}
+#note.on{display:block}
+#note .num{color:var(--red)}
+
+/* ---------- presets ---------- */
+#presets{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--ink);background:var(--paper)}
+#presets button{padding:10px 8px 9px;text-align:left;border-right:1px solid var(--rule);min-width:0}
+#presets button:last-child{border-right:0}
+#presets .k{display:block;font:500 10px/1 var(--mono);color:var(--ink2);letter-spacing:.08em}
+#presets .t{display:block;font:600 12.5px/1.2 var(--head);margin-top:5px;letter-spacing:.01em}
+#presets .s{display:block;font:400 10.5px/1.25 var(--sans);color:var(--ink2);margin-top:2px}
+#presets button:hover{background:var(--tint)}
+#presets button.on{background:var(--ink);color:var(--paper)}
+#presets button.on .k,#presets button.on .s{color:#C9C3B6}
+#presets button.hot .k{color:var(--red)} #presets button.hot.on .k{color:#FF8C82}
+
+/* ---------- panel ---------- */
+#panel{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;background:var(--paper)}
+#opts{overflow:auto;padding:0 0 8px}
+section.grp{border-bottom:1px solid var(--ink);padding:14px 20px 12px}
+section.grp>h2{display:flex;align-items:baseline;gap:10px;font:600 13px/1.2 var(--head);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+section.grp>h2 .n{font:500 11px var(--mono);color:var(--red);letter-spacing:.04em}
+section.grp>p.hint{font:400 11.5px/1.4 var(--sans);color:var(--ink2);margin-bottom:8px}
+.rows{border-top:1px solid var(--ink)}
+.row{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:9px;align-items:start;width:100%;text-align:left;padding:8px 6px 8px 2px;border-bottom:1px solid var(--rule)}
+.row:hover:not(:disabled){background:var(--tint)}
+.row .mk{width:9px;height:9px;margin-top:5px;border:1px solid var(--ink)}
+.row.on{background:var(--tint2)} .row.on .mk{background:var(--red);border-color:var(--red)}
+.row .tt{font:500 13px/1.3 var(--sans)} .row .ss{display:block;font:400 11.5px/1.35 var(--sans);color:var(--ink2)}
+.row .dl{font:400 11px/1.4 var(--mono);color:var(--ink2);text-align:right;white-space:nowrap}
+.row:disabled{opacity:.42;cursor:not-allowed}
+.rows.two{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}
+.btnline{display:flex;margin-top:8px}
+.btn{font:600 11.5px/1 var(--head);letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;border:1px solid var(--ink);background:var(--paper)}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.solid{background:var(--ink);color:var(--paper)} .btn.solid:hover{background:var(--red);border-color:var(--red)}
+.btn.sm{padding:8px 10px}
+.field{display:grid;gap:4px;margin-top:10px}
+.field label{font:500 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--ink2);text-transform:uppercase}
+.field input,.field select{font:500 15px/1.2 var(--mono);letter-spacing:.06em;padding:8px 9px;border:1px solid var(--ink);background:#fff;color:var(--ink);width:100%;border-radius:0}
+.field input:focus,.field select:focus{outline:2px solid var(--red);outline-offset:-1px}
+#mod{display:none;margin-top:10px;border:1px solid var(--ink);padding:10px;background:var(--tint)}
+#mod.on{display:block}
+#mod .mg{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px}
+#mod canvas{width:96px;height:210px;background:var(--paper);border:1px solid var(--ink)}
+#mod .field{margin-top:6px} #mod .field select{font-size:12px;padding:5px 6px}
+#mod .pre{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:8px;border-top:1px solid var(--ink)}
+#mod .pre button{font:400 10.5px/1.25 var(--sans);text-align:left;padding:5px 4px;border-bottom:1px solid var(--rule)}
+#mod .pre button:hover{background:var(--tint2)} #mod .pre b{font:500 10px var(--mono);color:var(--red);margin-right:4px}
+#mod p{font:400 11px/1.4 var(--sans);color:var(--ink2);margin-top:8px}
+
+/* ---------- footer: price / weight / export ---------- */
+#foot{border-top:1px solid var(--ink);padding:12px 20px 14px;background:var(--paper)}
+#sumrow{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:end}
+#sumrow .lab{font:500 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--ink2);text-transform:uppercase}
+#sumrow .big{font:700 30px/1.05 var(--head);letter-spacing:-.02em;margin-top:5px;font-variant-numeric:tabular-nums}
+#sumrow .big.sm{font-size:22px}
+#sumrow .tol{font:400 11px/1.3 var(--mono);color:var(--ink2);margin-top:3px}
+#fbtn{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+#fbtn .full{grid-column:1/-1}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--ink)}
+.seg button{font:500 11px/1 var(--mono);padding:9px 6px;letter-spacing:.04em}
+.seg button+button{border-left:1px solid var(--ink)}
+.seg button.on{background:var(--ink);color:var(--paper)}
+
+dialog{border:1px solid var(--ink);padding:0;max-width:min(760px,94vw);width:100%;background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(24,23,21,.55)}
+.dlg-h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--ink)}
+.dlg-h h3{font:600 14px var(--head);letter-spacing:.06em;text-transform:uppercase}
+.dlg-b{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;padding:16px}
+.dlg-b img{width:100%;background:var(--tint);border:1px solid var(--rule)}
+.dlg-b pre{font:400 11.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;background:#fff;border:1px solid var(--rule);padding:10px}
+.dlg-f{padding:0 16px 16px;font:400 12px/1.45 var(--sans);color:var(--ink2)}
+.dlg-f .btnline{margin-top:10px;gap:8px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font:500 12px var(--mono);padding:9px 14px;display:none;z-index:20}
+#toast.on{display:block}
+
+/* ---------- small screens ---------- */
+@media (max-width:980px){
+  body{overflow:auto}
+  #app{height:auto}
+  main{grid-template-columns:1fr}
+  #stage{border-right:0;border-bottom:1px solid var(--ink)}
+  #vwrap{height:62vh;min-height:380px}
+  #stage.split #vwrap{grid-template-columns:0 1fr}
+  #stage.split #refs{position:absolute;left:0;top:0;width:44%;height:100%;z-index:2;grid-column:auto}
+  #presets{grid-template-columns:repeat(4,1fr)}
+  #presets .s{display:none}
+  #opts{overflow:visible}
+  #panel{display:block}
+  #foot{position:sticky;bottom:0}
+  header{gap:12px;padding:0 12px}.tag{display:none}
+}
+
+#refTabs{display:grid;margin-bottom:12px;border-top:1px solid var(--ink)}
+#refTabs button{padding:8px 5px;text-align:left;font:12px/1.3 var(--sans);border-bottom:1px solid var(--rule)}
+#refTabs button.on{font-weight:600;background:var(--paper)}
+#refs #refPhoto{max-height:360px}.compareNote{font-size:11px;margin-bottom:14px}
+#mod .mg{grid-template-columns:52px minmax(0,1fr);gap:10px}#mod canvas{width:52px;height:180px}
+#mod .field label{font-size:10px;line-height:1.25}#modReset{margin-top:12px;font-size:10px;line-height:1.3;width:100%}
+#modSel{display:grid;grid-template-columns:1fr 1fr;gap:5px}#mod .field select{font:11px var(--sans);letter-spacing:0}
+header nav{gap:8px;align-items:center}header nav a,header nav button{font-size:10px;line-height:1.2;max-width:290px}
+@media(max-width:1200px){header .tag{display:none}}
+@media(max-width:980px){header{height:auto;min-height:64px;flex-wrap:wrap;padding:10px}header nav{margin-left:0;flex:1}#stage.split #vwrap{grid-template-columns:42% 58%;height:660px}#stage.split #refs{position:static;width:auto;height:auto;padding:8px}#refs h3{font-size:10px}#refTabs button{font-size:10px}#hudR{display:none}#presets{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">RESONANT<i>.</i></div>
+    <div class="tag">REV.02 · 10–14 days · 90-day warranty</div>
+    <nav>
+      <button class="btn" id="btnCompare">Compare with Your Photo (Same Angle in 3D)</button>
+      <a class="primary" href="proposal.html">€550 total · €500 prize + €50 on acceptance</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="stage">
+      <div id="vwrap">
+        <aside id="refs" aria-label="Reference photographs">
+          <h3 id="refTitle">Handle 2.jpeg — Same Angle in 3D</h3>
+          <div id="refTabs" role="group" aria-label="Choose comparison photo"></div>
+          <figure><img id="refPhoto" src="assets/reference/Handle_2.jpg" alt="Handle 2 oblique reference"><figcaption id="refCaption"></figcaption></figure>
+          <p class="compareNote">Locked orientation · scroll to zoom. Source photograph and CAD share the same viewing direction. The photographed unfinished neck differs from the finished 102.00 mm CAD boundary.</p>
+          <figure><img src="assets/reference/logo.jpg" alt="Original white Resonant Swiss Made medallion"><figcaption>logo.jpeg · original medallion artwork</figcaption></figure>
+        </aside>
+        <div id="view">
+          <canvas id="gl" tabindex="0" aria-label="3D blade viewport"></canvas>
+          <div id="labels"></div>
+          <div id="note"></div>
+          <div id="hud"><span id="hudL"></span><span id="hudR">Drag to orbit · wheel / pinch to zoom · right-drag to pan · full 360° incl. handle butt</span></div>
+          <div id="loading">Loading CAD models…</div>
+        </div>
+      </div>
+      <div id="presets" role="toolbar" aria-label="Camera presets"></div>
+    </div>
+
+    <aside id="panel">
+      <div id="opts"></div>
+      <div id="foot">
+        <div id="sumrow">
+          <div><div class="lab">Estimated weight</div><div class="big sm num" id="wOut">88 g</div><div class="tol num" id="wTol">±5 g manufacturing tolerance</div></div>
+          <div><div class="lab">Total price</div><div class="big num" id="pOut">€189.00</div><div class="tol" id="pSub">Prices are demo values, editable in WP admin</div></div>
+        </div>
+        <div id="fbtn">
+          <div class="seg" id="bgSeg"><button data-bg="studio" class="on">Studio bg</button><button data-bg="alpha">Transparent</button></div>
+          <button class="btn" id="btnExport">Export 4K PNG</button>
+          <button class="btn solid full" id="btnCart">Add to cart · WooCommerce simulation</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-h"><h3>Cart payload · server-validated (simulated)</h3><button class="btn sm" id="dlgClose">Close</button></div>
+  <div class="dlg-b"><div><img id="dlgImg" alt="Configuration preview"><div class="tol num" style="font:400 11px var(--mono);color:var(--ink2);margin-top:6px">Preview image saved with the order line item</div></div><pre id="dlgJson"></pre></div>
+  <div class="dlg-f">In the delivered plugin this JSON is posted to a WordPress REST route. The server rebuilds price, weight and compatibility from the admin tables and ignores any client-sent price. Cart, order, admin order view and customer e-mails store the same configuration and preview image.
+    <div class="btnline"><button class="btn" id="btnCopy">Copy share link</button></div></div>
+</dialog>
+<div id="toast"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* =====================================================================
+   Data tables (demo values; in the WP plugin these live in admin tables)
+   units: 1 scene unit = 100 mm · blade total length 258 mm = 2.58
+   ===================================================================== */
+const U = 100, TOTAL_L = 2.58, HANDLE_L = 1.02, HEAD_C = 0.51;
+const BLADES = {
+  palis: { name:'PALIS OFF',  size:'M',   spec:'Size M · 151×156 mm face · 258 mm', comp:'5-Ply Rosewood–Limba–Ayous', w:88, price:189, cad:true,
+    layers:[['Palisander (Rosewood)',0.6,'#7a3b2e'],['Limba',0.8,'#c9a66b'],['Ayous (core)',3.2,'#e3cfa0'],['Limba',0.8,'#c9a66b'],['Palisander (Rosewood)',0.6,'#7a3b2e']] },
+  opus:  { name:'OPUS 1 ALL+', size:'M',  spec:'Size M · 5-Ply Walnut–Spruce–Ayous', comp:'5-Ply Walnut–Spruce–Ayous', w:84, price:169,
+    layers:[['Walnut',0.6,'#5d3f2c'],['Spruce',0.8,'#d9c08c'],['Ayous (core)',3.2,'#e3cfa0'],['Spruce',0.8,'#d9c08c'],['Walnut',0.6,'#5d3f2c']] },
+  wave:  { name:'WAVE C OFF+', size:'L',  spec:'Size L · 5+2 inner carbon', comp:'5+2 Inner Carbon · Koto–Carbon–Ayous', w:90, price:219,
+    layers:[['Koto',null,'#b4764a'],['Ayous',null,'#e3cfa0'],['Carbon',null,'#2a2a2c'],['Ayous (core)',null,'#e3cfa0'],['Carbon',null,'#2a2a2c'],['Ayous',null,'#e3cfa0'],['Koto',null,'#b4764a']] },
+  pulse: { name:'PULSE C DEF', size:'DEF',spec:'Size DEF · 5-Ply Limba–Willow–Balsa', comp:'5-Ply Limba–Willow–Balsa', w:79, price:179,
+    layers:[['Limba',0.6,'#c9a66b'],['Willow',0.8,'#cdb58d'],['Balsa (core)',3.2,'#ecdcb8'],['Willow',0.8,'#cdb58d'],['Limba',0.6,'#c9a66b']] }
+};
+const HANDLES = {
+  h1: { t:'Handle 1 — Smoked Wenge', s:'Complete blade photo · dark wenge, single piece', dw:0, dp:0 },
+  h2: { t:'Handle 2 — African Padauk', s:'+ 3× Maple lines, 1 side line & Oak / Beech cap · locked to the 102.00 mm zone', dw:+1, dp:+9 }
+};
+const SHAPES = {
+  flared:     { t:'Flared', s:'Fusion 360 v16 CAD (Flared.step)', dw:0,  dp:0 },
+  straight:   { t:'Straight', s:'Geometry supplied by Resonant', dw:-1, dp:0 },
+  anatomical: { t:'Anatomical', s:'Geometry supplied by Resonant', dw:+1, dp:15 },
+  penhold:    { t:'Penhold', s:'Short handle · not for carbon blades', dw:-3, dp:15 }
+};
+const INNER = {
+  solid:  { t:'Solid / Heavy', s:'No cavity', dw:+6, dp:0 },
+  medium: { t:'Partially Hollowed / Medium', s:'CAD default cavity', dw:0, dp:0 },
+  light:  { t:'Maximally Hollowed / Light', s:'Max cavity · not for penhold', dw:-5, dp:10 }
+};
+const FINISH = {
+  raw:  { t:'Untreated', s:'Natural matte', dw:0, dp:0 },
+  oiled:{ t:'Oiled', s:'Linseed satin', dw:+1, dp:8 }
+};
+const FLAGS = { brazil:'Brazil (Photo Default)', swiss:'Switzerland', germany:'Germany', france:'France', italy:'Italy', sweden:'Sweden', japan:'Japan', none:'None' };
+const PRICE_PLATE = 0, W_PLATE = 0.5, PRICE_ENGRAVE = 12, DEFAULT_SERIAL = 'S02025148';
+const W_FLAG = 0.3, TOL = 5;
+
+const DEF = { blade:'palis', handle:'h1', shape:'flared', inner:'medium', finish:'raw', plate:true, flag:'brazil', customText:'', serial:true, customWood:false, woodZones:null, stripeCount:3, bg:'studio' };
+let cfg = { ...DEF };
+
+/* ---------- compatibility rules (physically manufacturable only) ---------- */
+function blocked(key, val, c = cfg) {
+  if (key==='shape' && val==='penhold' && c.blade==='wave') return 'Penhold handle is not offered for carbon (WAVE C) blades';
+  if (key==='inner' && val==='light' && c.shape==='penhold') return 'Maximum hollowing needs wall thickness a penhold handle does not have';
+  if (key==='shape' && val==='penhold' && c.inner==='light') return 'Penhold is not available with maximally hollowed handle';
+  if (key==='inner' && val==='light' && c.handle==='h2' && c.shape==='straight') return 'Hornbeam stripes would be cut open by the cavity on a straight handle';
+  if (key==='shape' && val==='straight' && c.handle==='h2' && c.inner==='light') return 'Hornbeam stripes would be cut open by the cavity on a straight handle';
+  return '';
+}
+function fixCfg(changed) {
+  const msgs = [];
+  for (const [k,tbl,fb] of [['shape',SHAPES,'flared'],['inner',INNER,'medium']]) {
+    if (blocked(k, cfg[k])) { msgs.push(`${tbl[cfg[k]].t} reset to ${tbl[fb].t}: ${blocked(k,cfg[k])}`); cfg[k]=fb; }
+  }
+  return msgs;
+}
+
+/* ---------- live calc ---------- */
+function calc(c = cfg) {
+  const b = BLADES[c.blade];
+  let w = b.w + HANDLES[c.handle].dw + SHAPES[c.shape].dw + INNER[c.inner].dw + FINISH[c.finish].dw;
+  let p = b.price + HANDLES[c.handle].dp + SHAPES[c.shape].dp + INNER[c.inner].dp + FINISH[c.finish].dp;
+  const custom = !!c.customText;
+  w += (c.plate ? 0 : -W_PLATE) + (c.flag==='none' ? -W_FLAG : 0) + (custom ? 0.2 : 0);
+  p += (c.plate ? PRICE_PLATE : 0) + (custom ? PRICE_ENGRAVE : 0);
+  return { weight: Math.round(w), price: p, custom };
+}
+
+/* =====================================================================
+   Renderer / scene
+   ===================================================================== */
+const view = document.getElementById('view'), canvas = document.getElementById('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:'high-performance' });
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .85;
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const PAPER = new THREE.Color('#F5F3EE');
+scene.background = PAPER;
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.85;
+// 3-point studio rig on top of the environment
+const key = new THREE.DirectionalLight(0xfff3e4, 1.5); key.position.set(3,4,5); scene.add(key);
+const fill = new THREE.DirectionalLight(0xdfe8ff, 0.45); fill.position.set(-4,1,2.5); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.9); rim.position.set(0.5,3,-5); scene.add(rim);
+
+let camera = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
+const perspectiveCamera = camera;
+const comparisonCamera = new THREE.OrthographicCamera(-.7,.7,.56,-.56,.01,100);
+let compareKey = null;
+camera.position.set(0, 0.2, 5.4);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minPolarAngle = 0; controls.maxPolarAngle = Math.PI;      // full 360°: also straight up/down the handle axis
+controls.minDistance = 0.35; controls.maxDistance = 10; controls.screenSpacePanning = true;
+controls.target.set(0, 0.05, 0);
+controls.addEventListener('start', () => { tween = null; });
+
+function resize() {
+  const w = view.clientWidth, h = view.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w/h;
+  if(camera.isOrthographicCamera){const hh=Math.max(camera.userData.viewHeight,camera.userData.viewWidth/(w/h))/2;camera.left=-hh*w/h;camera.right=hh*w/h;camera.top=hh;camera.bottom=-hh;}
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(view); resize();
+
+/* =====================================================================
+   Procedural fallback (used only if the .glb is not found)
+   ===================================================================== */
+const WOODS = { walnut:'#5a3a28', padauk:'#a8391e', hornbeam:'#d8c7a4', wenge:'#2a1e19', oak:'#d7c19c', maple:'#e4d2ad', cherry:'#a5603f', palisander:'#7a3b2e' };
+function woodCanvas(kind) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 1024; const g = c.getContext('2d');
+  const X = v => (v + 0.8) / 1.6 * 512, Y = v => (1.35 - v) / 2.7 * 1024;
+  const grain = (x0,y0,x1,y1,base,n,a) => { g.fillStyle = base; g.fillRect(x0,y0,x1-x0,y1-y0);
+    for (let i=0;i<n;i++){ const x = x0 + Math.random()*(x1-x0); g.strokeStyle = `rgba(0,0,0,${a*Math.random()})`; g.lineWidth = .5+Math.random()*1.4;
+      g.beginPath(); g.moveTo(x,y0); g.bezierCurveTo(x+4*Math.random(),y0+(y1-y0)/3,x-4*Math.random(),y0+2*(y1-y0)/3,x+2,y1); g.stroke(); } };
+  grain(0,0,512,Y(-0.2),WOODS.palisander,140,.32);
+  if (kind==='h1') grain(0,Y(-0.2),512,1024,WOODS.wenge,160,.55);
+  else {
+    grain(0,Y(-0.2),512,Y(-1.19),WOODS.padauk,120,.3);
+    for (const dx of [-0.045,0,0.045]) grain(X(dx)-3,Y(-0.2),X(dx)+3,Y(-1.19),WOODS.hornbeam,6,.2);
+    grain(0,Y(-1.19),512,1024,WOODS.oak,60,.2);
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  t.repeat.set(1,1); return t;
+}
+function proceduralBlade(kind) {
+  const s = new THREE.Shape(), pts = [], a = 0.755, b = 0.78, n = 2.6, f = (v) => Math.sign(v)*Math.pow(Math.abs(v), 2/n);
+  for (let d=-60; d<=240; d+=4) { const r = d*Math.PI/180; pts.push([a*f(Math.cos(r)), HEAD_C + b*f(Math.sin(r))]); }
+  s.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(p => s.lineTo(p[0],p[1]));
+  [[-0.13,-0.34],[-0.15,-0.8],[-0.18,-1.2],[-0.12,-1.285],[0.12,-1.285],[0.18,-1.2],[0.15,-0.8],[0.13,-0.34]].forEach(p => s.lineTo(p[0],p[1]));
+  const geo = new THREE.ExtrudeGeometry(s, { depth:0.06, bevelEnabled:true, bevelSize:0.012, bevelThickness:0.012, bevelSegments:2, curveSegments:24 });
+  geo.translate(0,0,-0.03);
+  const uv = geo.attributes.uv, pos = geo.attributes.position;
+  for (let i=0;i<uv.count;i++) uv.setXY(i, (pos.getX(i)+0.8)/1.6, (pos.getY(i)+1.35)/2.7);
+  const face = new THREE.MeshPhysicalMaterial({ map: woodCanvas(kind), roughness:.78 });
+  const side = new THREE.MeshPhysicalMaterial({ color:'#a9825a', roughness:.8 });
+  const m = new THREE.Mesh(geo, [face, side]); m.name = 'blade_placeholder';
+  const g = new THREE.Group(); g.add(m); return g;
+}
+
+/* =====================================================================
+   Model loading + normalisation (long axis → Y, head up, face → +Z)
+   ===================================================================== */
+const loader = new GLTFLoader();
+function loadGLB(url) { return new Promise((res, rej) => loader.load(url, g => res(g.scene), undefined, rej)); }
+
+function pointsOf(root, A, step = 7) {
+  root.updateMatrixWorld(true);
+  const out = [], v = new THREE.Vector3();
+  root.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position; if (!p) return;
+    for (let i=0;i<p.count;i+=step) { v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld).applyMatrix4(A); out.push(v.x,v.y,v.z); } });
+  return out;
+}
+function normalise(root) {
+  const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3());
+  const d = [size.x,size.y,size.z], idx = [0,1,2].sort((p,q) => d[q]-d[p]);
+  const ax = i => new THREE.Vector3().setComponent(i,1);
+  let rx = ax(idx[1]), ry = ax(idx[0]), rz = ax(idx[2]);
+  const mk = () => new THREE.Matrix4().set(rx.x,rx.y,rx.z,0, ry.x,ry.y,ry.z,0, rz.x,rz.y,rz.z,0, 0,0,0,1);
+  let A = mk(); if (A.determinant() < 0) { rx.negate(); A = mk(); }
+  let P = pointsOf(root, A), minY = 1e9, maxY = -1e9;
+  for (let i=1;i<P.length;i+=3) { minY = Math.min(minY,P[i]); maxY = Math.max(maxY,P[i]); }
+  const ext = (lo,hi) => { let a = 1e9, b = -1e9; for (let i=0;i<P.length;i+=3) { const y = P[i+1]; if (y>=lo && y<=hi) { a = Math.min(a,P[i]); b = Math.max(b,P[i]); } } return b-a; };
+  const H = maxY - minY;
+  if (ext(minY, minY+0.25*H) > ext(maxY-0.25*H, maxY)) {          // wide head at the bottom → flip 180° about Z
+    A = new THREE.Matrix4().makeRotationZ(Math.PI).multiply(A);
+  }
+  const s = TOTAL_L / H; A = new THREE.Matrix4().makeScale(s,s,s).multiply(A);
+  P = pointsOf(root, A); const b2 = new THREE.Box3(); for (let i=0;i<P.length;i+=3) b2.expandByPoint(new THREE.Vector3(P[i],P[i+1],P[i+2]));
+  const c = b2.getCenter(new THREE.Vector3());
+  A = new THREE.Matrix4().makeTranslation(-c.x, -TOTAL_L/2 - b2.min.y, -c.z).multiply(A);
+  const wrap = new THREE.Group(); wrap.add(root); wrap.matrixAutoUpdate = false; wrap.matrix.copy(A); wrap.matrixWorldNeedsUpdate = true;
+  return wrap;
+}
+function toPhysical(m) {
+  if (m.isMeshPhysicalMaterial) return m;
+  const p = new THREE.MeshPhysicalMaterial({ color:m.color, map:m.map, normalMap:m.normalMap, roughnessMap:m.roughnessMap, metalnessMap:m.metalnessMap,
+    aoMap:m.aoMap, roughness:m.roughness ?? .8, metalness:m.metalness ?? 0, emissive:m.emissive, emissiveMap:m.emissiveMap, transparent:m.transparent, opacity:m.opacity, side:m.side });
+  if (m.normalScale) p.normalScale.copy(m.normalScale).multiplyScalar(.25); p.name = m.name; return p;
+}
+
+const models = {};           // h1 / h2 → { wrap, main[], plate[], flag[], layers[], decals{}, mats[], proc }
+let current = 'h1';
+const sheetGroup = new THREE.Group(); sheetGroup.visible = false; scene.add(sheetGroup);
+
+async function buildModel(key, url) {
+  let root, proc = false;
+  try { root = await loadGLB(url); } catch (e) { root = proceduralBlade(key); proc = true; }
+  const wrap = proc ? (() => { const g = new THREE.Group(); g.add(root); return g; })() : normalise(root);
+  const info = { wrap, main:[], plate:[], flag:[], layers:[], mats:[], proc, decals:{}, dg:new THREE.Group() };
+  wrap.traverse(o => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const conv = mats.map(toPhysical); o.material = Array.isArray(o.material) ? conv : conv[0];
+    const n = (o.name + ' ' + mats.map(m => m.name).join(' ')).toLowerCase();
+    if (/plate|badge|epoxy|lens/.test(n)) info.plate.push(o);
+    else if (/flag/.test(n)) info.flag.push(o);
+    else if (/layer|ply|veneer/.test(n)) info.layers.push(o);
+    else { info.main.push(o); conv.forEach(m => { if (!info.mats.includes(m)) { m.userData.r0 = m.roughness; info.mats.push(m); } }); }
+  });
+  info.layers.sort((a,b) => a.name.localeCompare(b.name));
+  wrap.visible = false; info.dg.visible = false; scene.add(wrap); scene.add(info.dg); scene.updateMatrixWorld(true);
+  models[key] = info; return info;
+}
+
+/* ---------- decals: engraving, flag, model plate (raycast onto the real surface) ---------- */
+const ray = new THREE.Raycaster();
+function surface(info, x, y, side) {            // side +1 = front (+Z), −1 = back
+  const o = new THREE.Vector3(x, y, side*6), dir = new THREE.Vector3(0,0,-side);
+  ray.set(o, dir); ray.far = 12;
+  const h = ray.intersectObjects(info.main, true)[0]; if (!h) return null;
+  const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : new THREE.Vector3(0,0,side);
+  if (n.dot(dir) > 0) n.negate();
+  return { p:h.point, n };
+}
+function textCanvas(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; }
+function flagCanvas(kind) {
+  return textCanvas(320, 320, (g,w,h) => {
+    g.beginPath();g.arc(w/2,h/2,w/2-2,0,Math.PI*2);g.clip();
+    if (kind==='brazil') { g.fillStyle='#1f8a3b'; g.fillRect(0,0,w,h); g.fillStyle='#f6d416'; g.beginPath(); g.moveTo(w/2,14); g.lineTo(w-18,h/2); g.lineTo(w/2,h-14); g.lineTo(18,h/2); g.fill(); g.fillStyle='#1b3f94'; g.beginPath(); g.arc(w/2,h/2,52,0,7); g.fill(); g.strokeStyle='#fff'; g.lineWidth=7; g.beginPath(); g.arc(w/2,h/2+70,95,Math.PI*1.2,Math.PI*1.78); g.stroke(); }
+    else if (kind==='swiss') { g.fillStyle='#d52b1e'; g.fillRect(0,0,w,h); g.fillStyle='#fff'; g.fillRect(w/2-17,h/2-55,34,110); g.fillRect(w/2-55,h/2-17,110,34); }
+    else if (kind==='germany') { ['#111','#d00','#ffce00'].forEach((c,i) => { g.fillStyle=c; g.fillRect(0,i*h/3,w,h/3+1); }); }
+    else if (kind==='italy') { ['#009246','#fff','#ce2b37'].forEach((c,i)=>{g.fillStyle=c;g.fillRect(i*w/3,0,w/3+1,h);}); }
+    else if(kind==='sweden'){g.fillStyle='#006aa7';g.fillRect(0,0,w,h);g.fillStyle='#fecc00';g.fillRect(w*.31,0,w*.14,h);g.fillRect(0,h*.43,w,h*.14);}
+    else if(kind==='japan'){g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#bc002d';g.beginPath();g.arc(w/2,h/2,w*.23,0,Math.PI*2);g.fill();}
+    else if (kind==='france') { ['#0a3a9c','#fff','#e1232c'].forEach((c,i) => { g.fillStyle=c; g.fillRect(i*w/3,0,w/3+1,h); }); }
+    g.strokeStyle='rgba(0,0,0,.35)'; g.lineWidth=3; g.beginPath();g.arc(w/2,h/2,w/2-3,0,Math.PI*2);g.stroke();
+  });
+}
+function decalMesh(w, h, mat) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), mat); m.renderOrder = 4; return m; }
+function placeDecal(info, key, mesh, x, y, side) {
+  const s = surface(info, x, y, side); if (!s) { mesh.visible = false; return; }
+  mesh.position.copy(s.p).addScaledVector(s.n, 0.0025);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), s.n);
+  if (side<0) mesh.rotateZ(0);       // flag reads correctly from behind
+  mesh.userData.ok = true; if (!mesh.parent) info.dg.add(mesh);
+}
+function setupDecals(info) {
+  const base = { transparent:true, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-4, polygonOffsetUnits:-4 };
+  info.decals.engrave = decalMesh(0.25, 0.035, new THREE.MeshStandardMaterial({ ...base, roughness:.85, metalness:0 }));
+  info.decals.flag    = decalMesh(0.09, 0.09, new THREE.MeshStandardMaterial({ ...base, roughness:.55, metalness:0 }));
+  info.decals.plate   = decalMesh(0.2, 0.062, new THREE.MeshPhysicalMaterial({ ...base, roughness:.12, clearcoat:1, clearcoatRoughness:.05, metalness:0 }));
+  placeDecal(info,'engrave',info.decals.engrave, 0.1527, -0.1685, +1);
+  placeDecal(info,'flag',   info.decals.flag,   0.00, -1.035, -1);
+  placeDecal(info,'plate',  info.decals.plate,  0.00, -0.50, +1);
+  // photo-registered .glb may already contain plate / flag meshes → hide our overlay for those
+  if (info.plate.length) {info.decals.plate.userData.skip = true;info.decals.plate.visible=false;}
+  if (info.flag.length) {info.decals.flag.userData.skip = true;info.decals.flag.visible=false;}
+}
+const FONT_TXT = '700 {S}px "JetBrains Mono", ui-monospace, monospace';
+function refreshDecals() {
+  for (const k in models) {
+    const info = models[k], d = info.decals; if (!d.engrave) continue;
+    // engraving
+    const txt = cfg.customText.toUpperCase();
+    const ec = textCanvas(1200, 168, (g,w,h) => {
+      g.clearRect(0,0,w,h); if(!txt)return;
+      g.font='400 120px "IBM Plex Sans", sans-serif';g.fillStyle='rgba(30,14,8,.94)';
+      g.textAlign='center';g.textBaseline='middle';g.translate(w/2,h/2);g.scale(.78,1);g.fillText(txt,0,0,w*.96/.78);
+    });
+    swapMap(d.engrave, ec); d.engrave.visible = !!txt && d.engrave.userData.ok;
+    info.mats.filter(m=>m.name.includes('front / source serial')).forEach(m=>{
+      m.userData.serialMap ||= m.map;
+      m.map = cfg.serial ? m.userData.serialMap : serialOffMap;
+      m.needsUpdate=true;
+    });
+    // flag
+    if (!d.flag.userData.skip) { if (cfg.flag==='none') d.flag.visible = false; else { swapMap(d.flag, flagCanvas(cfg.flag)); d.flag.visible = !!d.flag.userData.ok; } }
+    info.flag.forEach(m => { m.visible = cfg.flag !== 'none'; const mt = m.material; if (!mt.userData.map0) mt.userData.map0 = mt.map;
+      if(mt.map && mt.map!==mt.userData.map0)mt.map.dispose();
+      if (cfg.flag === 'brazil' || cfg.flag === 'none') mt.map = mt.userData.map0; else { const t = new THREE.CanvasTexture(flagCanvas(cfg.flag)); t.colorSpace = THREE.SRGBColorSpace; t.flipY = mt.userData.map0 ? mt.userData.map0.flipY : true; mt.map = t; }
+      mt.needsUpdate = true; });
+    // plate / epoxy lens
+    if (!d.plate.userData.skip) { const pc = textCanvas(640, 200, (g,w,h) => { g.fillStyle='#161412'; g.beginPath(); g.roundRect(4,4,w-8,h-8,34); g.fill(); g.strokeStyle='#8f8a80'; g.lineWidth=5; g.stroke();
+        g.fillStyle='#E9E3D4'; g.font='600 74px "Space Grotesk", sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.letterSpacing='5px'; g.fillText(BLADES[cfg.blade].name.split(' ').slice(0,2).join(' '), w/2, h/2+4); });
+      swapMap(d.plate, pc); d.plate.visible = cfg.plate && d.plate.userData.ok; }
+    info.plate.forEach(m => m.visible = cfg.plate);
+  }
+}
+function swapMap(mesh, canvasEl) {
+  const m = mesh.material; if (m.map) m.map.dispose();
+  m.map = new THREE.CanvasTexture(canvasEl); m.map.colorSpace = THREE.SRGBColorSpace; m.map.anisotropy = 8; m.needsUpdate = true;
+}
+
+/* ---------- finish (PBR) ---------- */
+function applyFinish() {
+  const oiled = cfg.finish === 'oiled';
+  for (const k in models) models[k].mats.forEach(m => {
+    m.roughness = oiled ? Math.min(m.userData.r0, 0.42) : Math.max(m.userData.r0, 0.82);
+    m.clearcoat = oiled ? 0.28 : 0; m.clearcoatRoughness = oiled ? 0.32 : 0.6; m.needsUpdate = true; });
+}
+
+/* =====================================================================
+   Exploded 5-ply view (per-blade layer table)
+   ===================================================================== */
+let explodeT = 0, explodeV = 0, layerLabels = [];
+const labelsEl = document.getElementById('labels');
+function mkLabel(html, cls) { const d = document.createElement('div'); d.className = 'lbl ' + (cls||''); d.innerHTML = html; labelsEl.appendChild(d); return d; }
+const showThickness = true;
+function buildSheets() {
+  sheetGroup.clear(); layerLabels.forEach(l => l.el.remove()); layerLabels = [];
+  const info = models[current], L = BLADES[cfg.blade].layers, n = L.length;
+  const parts = [...info.main,...info.layers].filter(o => {
+    for(let p=o;p&&p!==info.wrap;p=p.parent)if (/__blade$/.test(p.name)) return true;
+    return info.proc && /blade/i.test(o.name) && !/handle/i.test(o.name);
+  }); if (!parts.length) return;
+  const tot = L.reduce((s,l) => s + (l[1]||0), 0);
+  scene.updateMatrixWorld(true);
+  L.forEach((l,i) => {
+    const k = l[1] && tot ? l[1]/tot : 1/n;
+    const mat = new THREE.MeshStandardMaterial({ color:l[2], roughness:.65, metalness:l[0]==='Carbon'?.3:0, side:THREE.DoubleSide });
+    parts.forEach(src => { const m = new THREE.Mesh(src.geometry, mat); m.matrixAutoUpdate = false;
+      m.userData.k = k; m.userData.i = i; m.userData.sourceName=src.name; m.userData.base = src.matrixWorld.clone(); sheetGroup.add(m); });
+    const t = l[1] ? `<small>${l[1].toFixed(1)} mm</small>` : '';
+    layerLabels.push({ el: mkLabel(`${i+1} · ${l[0]}${t}`), idx:i });
+  });
+}
+function updateSheets() {
+  const info = models[current]; if (!info) return;
+  const real = info.layers.length > 1, n = BLADES[cfg.blade].layers.length, gap = 2.0/(n-1);
+  explodeV += (explodeT - explodeV) * 0.12; if (Math.abs(explodeT-explodeV) < 0.002) explodeV = explodeT;
+  const on = explodeV > 0.01;
+  for (const k in models) { const v = (k === current) && !on; models[k].wrap.visible = v; models[k].dg.visible = v; }
+  sheetGroup.visible = on; layerLabels.forEach(l => l.el.style.display = on && explodeV > .4 ? '' : 'none');
+  if (!on) return;
+  sheetGroup.children.forEach(m => {
+    const z = ((n-1)/2 - m.userData.i) * gap * explodeV;
+    m.matrix.makeTranslation(0,0,z).multiply(new THREE.Matrix4().makeScale(1,1,m.userData.k)).multiply(m.userData.base);
+    m.matrixWorldNeedsUpdate = true;
+  });
+}
+
+/* =====================================================================
+   Camera presets (spherical tween – never cuts through the blade)
+   ===================================================================== */
+const PRESETS = [
+  { k:'01', t:'Front Face', s:'Full face + S02025148', target:[0,0.05,0], off:[0,0.15,5.3], fit:1 },
+  { k:'02', t:'3/4 Studio', s:'5-ply edge · flared handle', target:[0,0.0,0], off:[3.1,1.2,3.9], fit:1 },
+  { k:'03', t:'Back Face', s:'Back + handle flag', target:[0,0.05,0], off:[0,0.15,-5.3], fit:1 },
+  { k:'04', t:'Handle Butt', s:'Y=0 bottom cap · RESONANT SWISS MADE', target:[0,-1.29,0], off:[0.28,-1.05,0.62], hot:1 },
+  { k:'05', t:'Blade Edge', s:'Macro · 5-ply veneer lines', target:[0.72,0.52,0], off:[1.25,0.12,0.42] },
+  { k:'06', t:'Exploded 5-Ply', s:'Material per layer', target:[0,0.5,0], off:[3.6,1.1,3.6], fit:1, explode:1 },
+  { k:'07', t:'Compare with Your Photo', s:'Same Angle in 3D', target:[0,-0.78,0], off:[-2.6,-2,1.5], split:1, hot:1 }
+];
+let tween = null, presetIdx = 0;
+const pBar = document.getElementById('presets');
+PRESETS.forEach((p,i) => { const b = document.createElement('button'); b.className = (p.hot ? 'hot ' : '') + (i===0 ? 'on' : '');
+  b.innerHTML = `<span class="k">${p.k}</span><span class="t">${p.t}</span><span class="s">${p.s}</span>`; b.onclick = () => goPreset(i); pBar.appendChild(b); });
+
+function fitOffset(off) {
+  const v = new THREE.Vector3(...off), th = Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  const dH = 1.5/th, dW = 0.95/(th*camera.aspect), need = Math.max(dH, dW);
+  return v.length() < need ? v.setLength(need) : v;
+}
+const stage = document.getElementById('stage');
+function goPreset(i, instant) {
+  if(i===6){comparePhoto('handle2');return;}
+  compareKey=null; camera=perspectiveCamera;controls.object=camera;camera.up.set(0,1,0);controls.enableRotate=true;controls.enablePan=true;
+  const p = PRESETS[i]; presetIdx = i;
+  [...pBar.children].forEach((b,j) => b.classList.toggle('on', j===i));
+  explodeT = p.explode ? 1 : 0;
+  stage.classList.toggle('split', !!p.split); boundary.visible = !!p.split; bLabel.el.style.display = p.split ? '' : 'none';
+  setTimeout(resize, 380); resize();
+  const to = new THREE.Vector3(...p.target), off = p.fit ? fitOffset(p.off) : new THREE.Vector3(...p.off);
+  const sFrom = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+  const sTo = new THREE.Spherical().setFromVector3(off);
+  if (instant) { controls.target.copy(to); camera.position.copy(to).add(off); controls.update(); return; }
+  let dth = sTo.theta - sFrom.theta; dth = Math.atan2(Math.sin(dth), Math.cos(dth));
+  tween = { t0: performance.now(), dur: 1000, fT: controls.target.clone(), tT: to, fS: sFrom, tS: sTo, dth };
+  hudUpdate();
+}
+const ease = t => t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+function stepTween(now) {
+  if (!tween) return;
+  const k = Math.min(1,(now-tween.t0)/tween.dur), e = ease(k);
+  controls.target.lerpVectors(tween.fT, tween.tT, e);
+  const s = new THREE.Spherical(THREE.MathUtils.lerp(tween.fS.radius,tween.tS.radius,e), THREE.MathUtils.lerp(tween.fS.phi,tween.tS.phi,e), tween.fS.theta + tween.dth*e);
+  camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s));
+  if (k >= 1) tween = null;
+}
+
+/* ---------- 102.00 mm handle boundary (split view) ---------- */
+const yB = -TOTAL_L/2 + HANDLE_L;
+const boundary = new THREE.Group(); boundary.visible = false; scene.add(boundary);
+{ const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.55,yB,0.12), new THREE.Vector3(0.55,yB,0.12)]);
+  boundary.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color:0xD42B1E, depthTest:false })));
+  const g2 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0.62,-TOTAL_L/2,0.12), new THREE.Vector3(0.62,yB,0.12)]);
+  boundary.add(new THREE.Line(g2, new THREE.LineBasicMaterial({ color:0xD42B1E, depthTest:false }))); boundary.renderOrder = 9; }
+const bLabel = { el: mkLabel('102.00 mm<small>Flared.step zone</small>', 'red'), pos: new THREE.Vector3(0.62,(yB-TOTAL_L/2)/2,0.12) };
+bLabel.el.style.display = 'none';
+
+/* ---------- labels projection / HUD ---------- */
+function projectLabels() {
+  const w = view.clientWidth, h = view.clientHeight, v = new THREE.Vector3();
+  const place = (el, pos) => { v.copy(pos).project(camera); el.style.transform = `translate(${(v.x*.5+.5)*w}px,${(-v.y*.5+.5)*h}px) translateY(-50%)`; };
+  if (boundary.visible) place(bLabel.el, bLabel.pos);
+  if (sheetGroup.visible) layerLabels.forEach(l => { const n = layerLabels.length, gap = 2.0/(n-1); place(l.el, new THREE.Vector3(0.8, HEAD_C-0.15, ((n-1)/2 - l.idx)*gap*explodeV)); });
+}
+const hudL = document.getElementById('hudL');
+function hudUpdate() { const p = PRESETS[presetIdx]; hudL.innerHTML = `<b>${p.k} ${p.t}</b> · ${models[current]?.proc ? 'procedural placeholder (GLB not found)' : 'CAD-derived GLB'} · ${HANDLES[cfg.handle].t.split('—')[0].trim()}`; }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+const opts = document.getElementById('opts');
+const note = document.getElementById('note'); let noteTimer;
+function say(html, ms = 6000) { note.innerHTML = html; note.classList.add('on'); clearTimeout(noteTimer); noteTimer = setTimeout(() => note.classList.remove('on'), ms); }
+const toast = document.getElementById('toast'); let toastTimer;
+function tip(t) { toast.textContent = t; toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), 2200); }
+const sgn = (n,u) => n === 0 ? '±0 ' + u : (n>0?'+':'−') + Math.abs(n) + ' ' + u;
+const eur = n => n === 0 ? '€0' : (n>0?'+':'−') + '€' + Math.abs(n);
+
+function groupHTML(n, title, hint, id) { return `<section class="grp"><h2><span class="n">${n}</span>${title}</h2><p class="hint">${hint}</p><div class="rows" id="${id}"></div></section>`; }
+opts.innerHTML =
+  groupHTML('01','Handle Wood Design','Competition test: instant switch, both models are preloaded.','g-handle') +
+  `<section class="grp" style="padding-top:0;border-top:0;margin-top:-1px"><div class="btnline"><button class="btn sm" id="btnMod">Live 3D 8-Zone Wood Builder</button></div>
+   <div id="mod"><div class="mg"><canvas id="modCv" width="192" height="420"></canvas><div id="modSel"></div></div>
+   <div class="field"><label for="stripeCount">Longitudinal cheek stripes · 1–8</label><select id="stripeCount"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div><div class="pre" id="modPre"></div><button class="btn sm" id="modReset">Reset to Photo-Registered Handle 2</button>
+   <p>Eight material channels, six construction groups. Changes update the real CAD mesh immediately. €0 / design · target &lt;2 min. WordPress Admin integration included in M2. Species colours use photo-derived pore overlays; they are material previews.</p></div></section>` +
+  groupHTML('02','Blade Model','Fixed construction and size per model; customers cannot change layers or face veneer.','g-blade') +
+  groupHTML('03','Handle Shape','Only physically manufacturable combinations are selectable.','g-shape') +
+  groupHTML('04','Internal Construction','Changes estimated weight live.','g-inner') +
+  groupHTML('05','Finish','Oiled switches the 3D material (roughness / clearcoat).','g-finish') +
+  `<section class="grp"><h2><span class="n">06</span>Personalization</h2><p class="hint">Original S02025148 remains at the right shoulder. Custom text sits directly below it. All four details update in 3D.</p>
+   <div class="rows" id="g-plate"></div>
+   <div class="field"><label for="flagSel">Back handle flag / symbol</label><select id="flagSel">${Object.entries(FLAGS).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+   <div class="field"><label for="engr">Custom laser engraving · below S02025148 · up to 16 characters</label><input id="engr" maxlength="16" placeholder="GIANPIERO" spellcheck="false" autocomplete="off"></div><div class="btnline"><button class="btn sm" id="btnSerial">Serial S02025148 · ON</button><button class="btn sm" id="btnEngraving">Zoom to engraving</button></div></section>`;
+
+function rowBtn(id, tbl, key, dl) {
+  const host = document.getElementById(id); host.innerHTML = '';
+  Object.entries(tbl).forEach(([v,o]) => {
+    const b = document.createElement('button'); b.className = 'row'; b.dataset.v = v;
+    const why = blocked(key, v); b.disabled = !!why; if (why) b.title = why;
+    b.innerHTML = `<span class="mk"></span><span><span class="tt">${o.t}</span><span class="ss">${why || o.s || o.spec}</span></span><span class="dl num">${dl(o,v)}</span>`;
+    b.onclick = () => set(key, v); host.appendChild(b);
+  });
+}
+function renderRows() {
+  rowBtn('g-handle', HANDLES, 'handle', o => `${eur(o.dp)}<br>${sgn(o.dw,'g')}`);
+  rowBtn('g-blade',  Object.fromEntries(Object.entries(BLADES).map(([k,b]) => [k,{ t:b.name, s:b.spec + ' · ' + b.comp + (b.cad ? '' : ' · preview on PALIS geometry'), dw:b.w, dp:b.price }])), 'blade', (o) => `€${o.dp}<br>${o.dw} g`);
+  rowBtn('g-shape',  SHAPES, 'shape', o => `${eur(o.dp)}<br>${sgn(o.dw,'g')}`);
+  rowBtn('g-inner',  INNER, 'inner', o => `${eur(o.dp)}<br>${sgn(o.dw,'g')}`);
+  rowBtn('g-finish', FINISH, 'finish', o => `${eur(o.dp)}<br>${sgn(o.dw,'g')}`);
+  document.getElementById('g-plate').innerHTML = `<button class="row" id="plateRow"><span class="mk"></span><span><span class="tt">Front model plate / epoxy lens “PALIS OFF”</span><span class="ss">Visible on handle front</span></span><span class="dl num">${eur(PRICE_PLATE)}<br>${W_PLATE} g</span></button>`;
+  document.getElementById('plateRow').onclick = () => set('plate', !cfg.plate);
+  syncRows();
+}
+function syncRows() {
+  for (const [id,key] of [['g-handle','handle'],['g-blade','blade'],['g-shape','shape'],['g-inner','inner'],['g-finish','finish']])
+    document.querySelectorAll(`#${id} .row`).forEach(r => r.classList.toggle('on', r.dataset.v === cfg[key]));
+  document.getElementById('plateRow').classList.toggle('on', cfg.plate);
+  document.querySelector('#plateRow .tt').textContent = `Front model plate / epoxy lens “${BLADES[cfg.blade].name}”`;
+  document.getElementById('flagSel').value = cfg.flag;
+  const r = calc();
+  document.getElementById('wOut').textContent = `${r.weight} g`;
+  document.getElementById('wTol').textContent = `±${TOL} g tolerance · ${r.weight-TOL}–${r.weight+TOL} g`;
+  document.getElementById('pOut').textContent = '€' + r.price.toFixed(2);
+  document.getElementById('pSub').textContent = r.custom ? `incl. engraving ${eur(PRICE_ENGRAVE)}` : 'Prices are demo values, editable in WP admin';
+  document.getElementById('engr').value = cfg.customText;
+  document.getElementById('btnSerial').textContent='Serial S02025148 · '+(cfg.serial?'ON':'OFF');
+}
+
+function set(key, val) {
+  const prevHandle = cfg.handle, prevBlade = cfg.blade;
+  cfg[key] = val;
+  if(key==='handle'){cfg.plate=val==='h1';resetWoodMaps();cfg.customWood=false;cfg.woodZones=null;}
+  const msgs = fixCfg(key);
+  renderRows();
+  if (key==='handle') switchHandle();
+  if (key==='blade') { if (!BLADES[val].cad) say(`<b>${BLADES[val].name}</b>: CAD for this model is supplied by Resonant in Milestone 1. This preview reuses the PALIS Fusion 360 geometry; price, weight and the exploded layer table are already model-specific.`, 8000); buildSheets(); }
+  if (key==='shape' && val!=='flared') say(`<b>${SHAPES[val].t}</b>: only <span class="num">Flared.step</span> has been supplied so far, so the 3D preview keeps the flared geometry. Price and weight already follow the selected shape.`, 8000);
+  if (key==='handle' && val==='h2' && !compareKey) say(`Handle 2 pattern is registered inside the <span class="num">102.00 mm</span> flared handle zone. Open <b>07 Compare with Your Photo</b> to check the boundary.`, 7000);
+  if (msgs.length) say(msgs.join('<br>'), 7000);
+  applyFinish(); refreshDecals(); hudUpdate(); syncURL();
+}
+function switchHandle() {            // <5 ms: both models already in GPU memory, only visibility flips
+  current = cfg.handle; for (const k in models) { const v = (k === current) && explodeV < .01; models[k].wrap.visible = v; models[k].dg.visible = v; }
+  buildSheets();
+}
+
+document.getElementById('flagSel').onchange = e => set('flag', e.target.value);
+document.getElementById('engr').oninput = e => { cfg.customText=e.target.value.toUpperCase().replace(/[^A-Z0-9 \-]/g,'').slice(0,16);syncRows();refreshDecals();syncURL();zoomEngraving(); };
+document.getElementById('btnSerial').onclick=()=>set('serial',!cfg.serial);
+document.getElementById('btnEngraving').onclick=()=>zoomEngraving();
+function zoomEngraving(){comparePhoto('blade2',false);}
+document.getElementById('bgSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; cfg.bg = b.dataset.bg;
+  document.querySelectorAll('#bgSeg button').forEach(x => x.classList.toggle('on', x===b)); scene.background = cfg.bg==='alpha' ? null : PAPER; };
+
+/* ---------- live 8-channel CAD texture builder ---------- */
+const WOOD_NAMES={padauk:'African Padauk',wenge:'Smoked Wenge',maple:'Hard Maple',hornbeam:'European Hornbeam',oak:'White Oak',walnut:'American Walnut',cherry:'Swiss Pear / Cherry',ebony:'Ebony'};
+WOODS.ebony='#201b18';
+const ZONES=[['left','1a · Left body wing'],['right','1b · Right body wing'],['outer','2a · Outer cheek lines'],['middle','2b · Centre cheek line'],['core','3 · Centre core / gaps'],['side','4 · Side flank line ×1'],['cap','5 · Butt end-cap wood'],['rim','6 · Butt rim inlay']];
+const photoZones={left:'padauk',right:'padauk',outer:'maple',middle:'maple',core:'padauk',side:'maple',cap:'oak',rim:'maple'};
+let modState={...photoZones};let woodImages={};let builderRevision=0;
+const textureLoader=new THREE.TextureLoader();
+const serialOffMap=await textureLoader.loadAsync('assets/textures/blade_front_no_serial.jpg');serialOffMap.flipY=false;serialOffMap.colorSpace=THREE.SRGBColorSpace;
+async function loadWoodImages(){
+  for(const [key,file] of Object.entries({grain:'handle2_side.jpg',butt:'handle2_butt_clean.jpg',rim:'handle2_butt_rim_mask.png'})){
+    woodImages[key]=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src='assets/textures/'+file;});
+  }
+}
+function painted(c,g,zone,x,y,w,h,source='grain'){
+  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle=WOODS[modState[zone]];g.fillRect(x,y,w,h);
+  g.globalCompositeOperation='soft-light';
+  const im=woodImages[source];g.drawImage(im,im.width*.12,0,im.width*.2,im.height,0,0,c.width,c.height);
+  g.restore();
+}
+function synth(kind){
+  const c=document.createElement('canvas');c.width=kind==='butt'?1536:768;c.height=kind==='butt'?1114:2048;
+  const g=c.getContext('2d'),W=c.width,H=c.height,cut=H*(1-5.5/102),rimH=H*.85/102;
+  painted(c,g,'left',0,0,W/2,H);painted(c,g,'right',W/2,0,W/2,H);
+  if(kind==='butt'){
+    painted(c,g,'cap',0,0,W,H,'butt');const r=document.createElement('canvas');r.width=W;r.height=H;const rg=r.getContext('2d');
+    rg.drawImage(woodImages.rim,0,0,W,H);const px=rg.getImageData(0,0,W,H);for(let i=0;i<px.data.length;i+=4){px.data[i+3]=px.data[i];px.data[i]=px.data[i+1]=px.data[i+2]=255;}rg.putImageData(px,0,0);
+    rg.globalCompositeOperation='source-in';rg.fillStyle=WOODS[modState.rim];rg.fillRect(0,0,W,H);g.drawImage(r,0,0);
+    const y0=H*(.5-3/26),hh=H*6/26;g.drawImage(woodImages.butt,0,y0,W,hh,0,y0,W,hh);
+  }else{
+    if(kind==='side'){painted(c,g,'side',(W-W*1.05/10)/2,0,W*1.05/10,cut);}
+    else{
+      const count=cfg.stripeCount,sw=W*1.05/35.866,span=(count*2-1)*sw;
+      painted(c,g,'core',(W-span)/2,0,span,cut);
+      for(let i=0;i<count;i++)painted(c,g,i===Math.floor(count/2)?'middle':'outer',W/2+(i-(count-1)/2)*2*sw-sw/2,0,sw,cut);
+    }
+    painted(c,g,'cap',0,cut,W,H-cut,'butt');painted(c,g,'rim',0,cut,W,rimH);
+  }return c;
+}
+function resetWoodMaps(){
+  Object.values(models).forEach(info=>info.mats.forEach(m=>{if(m.userData.photoMap){if(m.map!==m.userData.photoMap)m.map.dispose();m.map=m.userData.photoMap;m.needsUpdate=true;}}));
+}
+function applyWood(){
+  if(!models.h2 || !woodImages.grain)return;
+  if(cfg.handle!=='h2')set('handle','h2');
+  cfg.customWood=true;cfg.woodZones={...modState};
+  const canvases={front:synth('front'),side:synth('side'),butt:synth('butt')};
+  models.h2.mats.filter(m=>/^Handle 2/.test(m.name)).forEach(m=>{
+    m.userData.photoMap ||= m.map;
+    const kind=m.name.includes('end grain')?'butt':m.name.includes('side flank')?'side':'front';
+    const old=m.map,t=new THREE.CanvasTexture(canvases[kind]);t.colorSpace=THREE.SRGBColorSpace;t.flipY=false;
+    t.repeat.copy(m.userData.photoMap.repeat);t.offset.copy(m.userData.photoMap.offset);t.wrapS=m.userData.photoMap.wrapS;t.wrapT=m.userData.photoMap.wrapT;t.anisotropy=8;
+    m.map=t;m.needsUpdate=true;if(old!==m.userData.photoMap)old.dispose();
+  });
+  const cv=document.getElementById('modCv');cv.getContext('2d').drawImage(canvases.front,0,0,cv.width,cv.height);builderRevision++;syncURL();
+}
+function syncMod(){document.querySelectorAll('#modSel select').forEach(e=>e.value=modState[e.dataset.z]);document.getElementById('stripeCount').value=String(cfg.stripeCount);}
+const modSel=document.getElementById('modSel');
+modSel.innerHTML=ZONES.map(([key,label])=>`<div class="field"><label for="zone-${key}">${label}</label><select id="zone-${key}" data-z="${key}">${Object.entries(WOOD_NAMES).map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></div>`).join('');
+modSel.onchange=e=>{modState[e.target.dataset.z]=e.target.value;applyWood();};
+const woodPresets=[['Photo palette',{...photoZones}],['Wenge / Maple',{...photoZones,left:'wenge',right:'wenge',core:'wenge',cap:'wenge'}],['Walnut / Maple',{...photoZones,left:'walnut',right:'walnut',core:'walnut',cap:'walnut'}],['Pear / Ebony',{...photoZones,left:'cherry',right:'cherry',core:'cherry',outer:'ebony',middle:'ebony',cap:'cherry'}],['All Hornbeam',Object.fromEntries(ZONES.map(([k])=>[k,'hornbeam']))],['Ebony / Padauk',{...photoZones,left:'ebony',right:'ebony',core:'ebony',outer:'padauk',middle:'padauk',cap:'ebony'}]];
+document.getElementById('modPre').innerHTML=woodPresets.map(([n],i)=>`<button data-i="${i}">${n}</button>`).join('');
+document.getElementById('modPre').onclick=e=>{const b=e.target.closest('button');if(b){modState={...woodPresets[b.dataset.i][1]};syncMod();applyWood();}};
+document.getElementById('stripeCount').onchange=e=>{cfg.stripeCount=Number(e.target.value);applyWood();};
+document.getElementById('modReset').onclick=()=>{set('handle','h2');modState={...photoZones};cfg.stripeCount=3;syncMod();document.getElementById('modCv').getContext('2d').drawImage(woodImages.grain,0,0,192,420);syncURL();};
+document.getElementById('btnMod').onclick=()=>document.getElementById('mod').classList.toggle('on');syncMod();
+
+/* ---------- same-angle photo comparisons; same CAD camera as Cycles ---------- */
+const COMPARISONS={
+ handle2:{file:'Handle_2.jpg',title:'Handle 2.jpeg — Same Angle in 3D',label:'Handle 2.jpeg (Oblique 3+1 Maple Lines & Butt Cap)',handle:'h2',plate:false,target:[0,-.78,0],off:[26,-20,15],height:1.12,up:[0,0,1],caption:'3 × 1.05 mm cheek lines = 1.05 mm Padauk gaps · 1 side line · continuous cut-top grain · oak/beech cap + 0.9 mm CAD-edge maple rim.'},
+ handle1:{file:'Handle_1.jpg',title:'Handle 1.jpeg — 102.00 mm Boundary Check',label:'Handle 1.jpeg (Frontal 102.00 mm Boundary Check)',handle:'h2',plate:false,target:[0,-.75,0],off:[0,0,20],height:1.25,up:[0,1,0],boundary:true,caption:'The unfinished photograph is trimmed to the finished Flared.step handle: 102.00 mm; 0.00 mm bleed onto the blade face.'},
+ blade1:{file:'Blade_1.jpg',title:'Blade 1.jpeg — Front Face & PALIS OFF Lens',label:'Blade 1.jpeg (Front Face & PALIS OFF Lens)',handle:'h1',plate:true,target:[0,0,0],off:[0,0,20],height:2.9,up:[0,1,0],caption:'Original serial and PALIS / OFF lens. Original photo pixels are retained.'},
+ blade3:{file:'Blade_3.jpg',title:'Blade 3.jpeg — Back Face & Brazil Flag',label:'Blade 3.jpeg (Back Face & Brazil Flag Badge)',handle:'h1',plate:true,flag:'brazil',target:[0,-.75,0],off:[0,0,-20],height:1.3,up:[0,1,0],caption:'Circular Brazil badge at CAD Y = 25.50 mm on the handle back.'},
+ blade2:{file:'Blade_2.jpg',title:'Blade 2.jpeg — Shoulder Serial & Custom Laser Text',label:'Blade 2.jpeg (Shoulder Edge Serial S02025148)',target:[.1527,-.125,0],off:[.8,0,20],height:.55,up:[0,1,0],caption:'S02025148 retains the original photographic position. Your custom laser text appears 5.80 mm below its centre.'}
+};
+const refTabs=document.getElementById('refTabs');
+refTabs.innerHTML=Object.entries(COMPARISONS).map(([k,p])=>`<button data-ref="${k}" aria-pressed="false">${p.label}</button>`).join('');
+refTabs.onclick=e=>{const b=e.target.closest('button');if(b)comparePhoto(b.dataset.ref);};
+function comparePhoto(key,split=true){
+ const p=COMPARISONS[key];if(!p||!models.h2)return;
+ compareKey=key;note.classList.remove('on');cfg.blade='palis';cfg.shape='flared';
+ if(p.handle){set('handle',p.handle);cfg.plate=p.plate;}if(p.flag)cfg.flag=p.flag;
+ refreshDecals();syncRows();syncURL();presetIdx=6;explodeT=0;tween=null;
+ [...pBar.children].forEach((b,i)=>b.classList.toggle('on',i===6));
+ stage.classList.toggle('split',split);boundary.visible=!!p.boundary;bLabel.el.style.display=p.boundary?'':'none';
+ document.getElementById('refTitle').textContent=p.title;document.getElementById('refPhoto').src='assets/reference/'+p.file;
+ document.getElementById('refPhoto').alt=p.label;document.getElementById('refCaption').textContent=p.caption;
+ refTabs.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.ref===key);b.setAttribute('aria-pressed',b.dataset.ref===key);});
+ camera=comparisonCamera;controls.object=camera;camera.userData.viewHeight=p.height;camera.userData.viewWidth=key==='handle2'?1.37:key==='handle1'?.7:key==='blade3'?.7:key==='blade2'?.6:1.75;camera.zoom=1;camera.up.set(...p.up);
+ controls.target.set(...p.target);camera.position.copy(controls.target).add(new THREE.Vector3(...p.off));camera.lookAt(controls.target);
+ controls.enableRotate=false;controls.enablePan=false;controls.update();resize();setTimeout(resize,400);hudUpdate();
+}
+document.getElementById('btnCompare').onclick=()=>comparePhoto('handle2');
+
+/* ---------- share link (?cfg=) ---------- */
+const enc = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const dec = s => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))));
+function cfgForShare() { const o = { ...cfg }; delete o.bg; return o; }
+function shareURL() { const u = new URL(location.href); u.searchParams.set('cfg', enc(cfgForShare())); return u.toString(); }
+function syncURL() { try { history.replaceState(null,'',shareURL()); } catch(e){} }
+
+/* ---------- export / cart ---------- */
+function capture(W, H, alpha) {
+  return new Promise(res => {
+    const size = renderer.getSize(new THREE.Vector2()), pr = renderer.getPixelRatio(), bg = scene.background, as = camera.aspect;
+    const bounds = camera.isOrthographicCamera ? [camera.left,camera.right,camera.top,camera.bottom] : null;
+    const lim = Math.min(renderer.capabilities.maxTextureSize, 8192); const k = Math.min(1, lim/W); W = Math.floor(W*k); H = Math.floor(H*k);
+    labelsEl.style.visibility = 'hidden';
+    renderer.setPixelRatio(1); renderer.setSize(W,H,false); camera.aspect = W/H;
+    if(bounds){const cx=(bounds[0]+bounds[1])/2,cy=(bounds[2]+bounds[3])/2,h=Math.max(bounds[2]-bounds[3],(bounds[1]-bounds[0])*H/W);camera.left=cx-h*W/H/2;camera.right=cx+h*W/H/2;camera.top=cy+h/2;camera.bottom=cy-h/2;}
+    camera.updateProjectionMatrix();
+    scene.background = alpha ? null : PAPER; renderer.setClearColor(0x000000, 0);
+    renderer.render(scene, camera);
+    canvas.toBlob(b => res({ blob:b, W, H }), 'image/png');             // bitmap is copied synchronously at call time
+    scene.background = bg; renderer.setPixelRatio(pr); renderer.setSize(size.x,size.y,false); camera.aspect = as;
+    if(bounds)[camera.left,camera.right,camera.top,camera.bottom]=bounds;
+    camera.updateProjectionMatrix(); labelsEl.style.visibility = '';
+  });
+}
+document.getElementById('btnExport').onclick = async () => {
+  const wasSplit = stage.classList.contains('split');
+  const { blob, W, H } = await capture(3840, 2160, cfg.bg === 'alpha');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `resonant_${cfg.blade}_${cfg.handle}_${W}x${H}${cfg.bg==='alpha'?'_transparent':''}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  tip(`Exported ${W}×${H} PNG · ${cfg.bg==='alpha' ? 'transparent' : 'studio'} background`);
+};
+const dlg = document.getElementById('dlg');
+document.getElementById('dlgClose').onclick = () => dlg.close();
+document.getElementById('btnCart').onclick = async () => {
+  const r = calc(), b = BLADES[cfg.blade];
+  const { blob } = await capture(640, 800, false);
+  document.getElementById('dlgImg').src = URL.createObjectURL(blob);
+  const payload = { sku: `RES-${cfg.blade.toUpperCase()}`, blade:{ model:b.name, size:b.size, construction:b.comp }, handle:{ wood:HANDLES[cfg.handle].t, shape:cfg.shape, internal:cfg.inner, finish:cfg.finish },
+    personalization:{ plate:cfg.plate, flag:cfg.flag, serial:cfg.serial?DEFAULT_SERIAL:null, customText:cfg.customText, woodZones:cfg.woodZones, stripeCount:cfg.stripeCount }, validated:{ price_eur:r.price, weight_g:r.weight, tolerance_g:TOL, compatibility:'ok' }, share:shareURL() };
+  document.getElementById('dlgJson').textContent = JSON.stringify(payload, null, 2); dlg.showModal();
+};
+document.getElementById('btnCopy').onclick = () => { navigator.clipboard?.writeText(shareURL()).then(() => tip('Share link copied'), () => tip('Copy failed, use the address bar URL')); };
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+try { const q = new URL(location.href).searchParams.get('cfg'); if (q) cfg = { ...DEF, ...dec(q), bg:'studio' }; } catch(e) {}
+cfg.customText=String(cfg.customText||'').slice(0,16);
+for(const [k,table] of [['handle',HANDLES],['blade',BLADES],['shape',SHAPES],['inner',INNER],['finish',FINISH],['flag',FLAGS]])if(!table[cfg[k]])cfg[k]=DEF[k];
+cfg.stripeCount=Math.max(1,Math.min(8,Number(cfg.stripeCount)||3));
+fixCfg(); renderRows();
+
+const t0 = performance.now();
+const [m1, m2] = await Promise.all([ buildModel('h1','assets/models/resonant_palis_handle1.glb'), buildModel('h2','assets/models/resonant_palis_handle2.glb') ]);
+await loadWoodImages();document.getElementById('modCv').getContext('2d').drawImage(woodImages.grain,0,0,192,420);
+setupDecals(m1); setupDecals(m2);
+if(cfg.customWood && cfg.woodZones){modState={...photoZones,...cfg.woodZones};for(const k in modState)if(!WOOD_NAMES[modState[k]])modState[k]=photoZones[k];syncMod();applyWood();}
+current = cfg.handle; applyFinish(); refreshDecals(); buildSheets();
+models[current].wrap.visible = true; models[current].dg.visible = true;
+syncRows(); goPreset(0, true); hudUpdate();
+document.getElementById('loading').classList.add('off');
+if (m1.proc || m2.proc) say('The <span class="num">.glb</span> CAD models were not found next to this page, so a procedural placeholder is shown. All options, pricing and the camera system still work.', 9000);
+console.info(`[resonant] models ready in ${(performance.now()-t0).toFixed(0)} ms`);
+
+renderer.setAnimationLoop(now => { stepTween(now); controls.update(); updateSheets(); projectLabels(); renderer.render(scene, camera); });
+window.__resonant = { get cfg() { return cfg; }, set, goPreset, comparePhoto, calc, models, get camera(){return camera;}, get compareKey(){return compareKey;}, get builderRevision(){return builderRevision;}, get boundaryVisible(){return boundary.visible;}, capture, sheetGroup };   // for automated screenshots
+</script>
+</body>
+</html>

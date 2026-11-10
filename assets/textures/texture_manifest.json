@@ -1,0 +1,476 @@
+{
+  "workflow": "OpenCV perspective/affine sampling + source-pixel compositing",
+  "source_sha256": {
+    "Blade 4.jpeg": "a682c3bd9087941f72ed1c77c5bf286ba15dd17ba3d50fa0e5c73420086febbd",
+    "Blade 2.jpeg": "d24ee64322cb1cbcace0a4e45f10885af6d5cfdf2fa317b8e3e70d798ec25e57",
+    "Blade 3.jpeg": "a646790ed8f897cb7526d09875653fb9750eebaf41b18cc010c71aa84f937a11",
+    "Handle 1.jpeg": "1f1b5712ea86df9dfd4b922c1af7b9573a3809016b0d6936a8027bbbd990efe7",
+    "Handle 2.jpeg": "0f8d30c543fe5679a54f935625999d12e8b3ee4fd5758cd42971daaa1c356f33",
+    "Blade 1.jpeg": "b80c983965c67c7e5db07ea15e4ecf42827661643c114ce73552bd3e93b7db7e",
+    "logo.jpeg": "5aee09829bcf2b5856e2f8d2eb4730e07998f1e3ae31f613824b813b8ac61748"
+  },
+  "registration": {
+    "serial": {
+      "source_rect": [
+        3160,
+        3230,
+        3600,
+        3315
+      ],
+      "center_mm": [
+        15.26799738219896,
+        117.97582794061667
+      ],
+      "custom_center_mm": [
+        15.26799738219896,
+        112.17582794061667
+      ]
+    },
+    "front": {
+      "photo_crop_xywh": [
+        1543,
+        421,
+        3056,
+        5254
+      ],
+      "px_per_mm": [
+        20.23841059602649,
+        20.364341085271317
+      ]
+    },
+    "back": {
+      "photo_crop_xywh": [
+        1543,
+        420,
+        3055,
+        5253
+      ],
+      "px_per_mm": [
+        20.2317880794702,
+        20.36046511627907
+      ]
+    },
+    "butt": {
+      "photo_crop": [
+        437,
+        773,
+        2967,
+        2619
+      ],
+      "medallion_crop": [
+        1165,
+        1161,
+        2238,
+        2234
+      ]
+    }
+  },
+  "limitations": [
+    "JPEG originals and exported JPEGs are lossy; masters/ holds lossless working PNGs, not additional recovered photographic resolution.",
+    "Surface is curved: frontal photos do not provide a calibrated full 3D scan; unseen flank and reverse regions are reconstructed from source grain.",
+    "Species and 5.5 mm end-cap are user-specified; layer thickness, cavity dimensions and PBR microstructure are not measured by these photographs."
+  ],
+  "textures": {
+    "badge_palis_off.png": {
+      "size": [
+        153,
+        854
+      ],
+      "provenance": "Blade 1.jpeg crop [2984,4494,3137,5348]; original PALIS OFF lettering; capsule alpha."
+    },
+    "flag_brazil.png": {
+      "size": [
+        183,
+        181
+      ],
+      "provenance": "Blade 3.jpeg crop [2961,5064,3144,5245]; original flag photograph with ellipse alpha."
+    },
+    "medallion_resonant.png": {
+      "size": [
+        1073,
+        1073
+      ],
+      "provenance": "logo.jpeg crop [1165,1161,2238,2234]; original metal medallion, circle alpha; no reconstructed lettering."
+    },
+    "blade_front_albedo.jpg": {
+      "size": [
+        2048,
+        3500
+      ],
+      "provenance": {
+        "source": "Blade 1.jpeg",
+        "crop_xywh": [
+          1543,
+          421,
+          3056,
+          5254
+        ],
+        "domain_mm": [
+          -75.5,
+          75.5,
+          0,
+          258
+        ],
+        "mapping": "silhouette-extrema affine XY; camera near frontal; no claim of calibrated photogrammetry",
+        "occluded_tang": "Y < 102 mm continued from adjacent blade grain; handle photograph removed from blade material"
+      }
+    },
+    "blade_front_no_serial.jpg": {
+      "size": [
+        2048,
+        3500
+      ],
+      "provenance": "Serial removed only for optional visibility toggle, using same-column adjacent grain. Default albedo retains original source pixels."
+    },
+    "handle1_front.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": {
+        "source": "Blade 1.jpeg",
+        "domain_mm": [
+          -17.933,
+          17.933,
+          0,
+          102
+        ],
+        "mapping": "same calibrated XY projection as blade; unseen flank bleed"
+      }
+    },
+    "handle1_front_clean.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Photographic handle wood, optional badge/flag removed by feathered adjacent grain transfer; reconstructed hidden region."
+    },
+    "handle1_front_normal.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "handle1_front_roughness.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    },
+    "handle1_side.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Unlabelled lateral strip of Blade 1 handle; cylindrical UV flank / cavity continuation."
+    },
+    "handle1_side_normal.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "handle1_side_roughness.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    },
+    "blade_back_albedo.jpg": {
+      "size": [
+        2048,
+        3500
+      ],
+      "provenance": {
+        "source": "Blade 3.jpeg",
+        "crop_xywh": [
+          1543,
+          420,
+          3055,
+          5253
+        ],
+        "domain_mm": [
+          -75.5,
+          75.5,
+          0,
+          258
+        ],
+        "mapping": "silhouette-extrema affine XY; camera near frontal; no claim of calibrated photogrammetry",
+        "occluded_tang": "Y < 102 mm continued from adjacent blade grain; handle photograph removed from blade material"
+      }
+    },
+    "handle1_back.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": {
+        "source": "Blade 3.jpeg",
+        "domain_mm": [
+          -17.933,
+          17.933,
+          0,
+          102
+        ],
+        "mapping": "same calibrated XY projection as blade; unseen flank bleed"
+      }
+    },
+    "handle1_back_clean.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Photographic handle wood, optional badge/flag removed by feathered adjacent grain transfer; reconstructed hidden region."
+    },
+    "handle1_back_normal.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "handle1_back_roughness.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    },
+    "handle2_front.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": {
+        "source": "Handle 1.jpeg",
+        "diffuse_color_reference": "Handle 2.jpeg [3300,1500,3450,1700]",
+        "domain_mm": [
+          -17.933,
+          17.933,
+          0,
+          102
+        ],
+        "stripe_centers_x_mm": [
+          -2.1,
+          0,
+          2.1
+        ],
+        "stripe_width_mm": 1.05,
+        "gap_width_mm": 1.05,
+        "cap_y_mm": [
+          0,
+          5.5
+        ],
+        "rim_y_mm": [
+          4.65,
+          5.5
+        ],
+        "note": "photo material reconstruction; hidden reverse uses same photographed design, not a measured reverse scan"
+      }
+    },
+    "handle2_front_clean.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Alias of unlabelled photo-derived Handle 2 material."
+    },
+    "handle2_front_with_badge.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Handle 2 material + original Blade 1 PALIS OFF optional badge, at identical CAD coordinate placement."
+    },
+    "handle2_front_normal.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "handle2_front_roughness.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    },
+    "handle2_side.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": {
+        "side_line_width_mm": 1.05,
+        "side_domain_mm": 10,
+        "cap_y_mm": [
+          0,
+          5.5
+        ],
+        "rim_y_mm": [
+          4.65,
+          5.5
+        ],
+        "note": "One longitudinal maple line centred on the 10 mm flank; stops at cap."
+      }
+    },
+    "handle2_side_normal.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "handle2_side_roughness.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    },
+    "handle2_back.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": {
+        "source": "Handle 1.jpeg",
+        "diffuse_color_reference": "Handle 2.jpeg [3300,1500,3450,1700]",
+        "domain_mm": [
+          -17.933,
+          17.933,
+          0,
+          102
+        ],
+        "stripe_centers_x_mm": [
+          -2.1,
+          0,
+          2.1
+        ],
+        "stripe_width_mm": 1.05,
+        "gap_width_mm": 1.05,
+        "cap_y_mm": [
+          0,
+          5.5
+        ],
+        "rim_y_mm": [
+          4.65,
+          5.5
+        ],
+        "note": "photo material reconstruction; hidden reverse uses same photographed design, not a measured reverse scan"
+      }
+    },
+    "handle2_back_clean.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Alias of unlabelled photo-derived Handle 2 material."
+    },
+    "handle2_back_with_badge.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Handle 2 material + original Blade 1 PALIS OFF optional badge, at identical CAD coordinate placement."
+    },
+    "handle2_back_normal.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "handle2_back_roughness.jpg": {
+      "size": [
+        768,
+        2048
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    },
+    "blade_edge_plies.jpg": {
+      "size": [
+        2048,
+        512
+      ],
+      "provenance": {
+        "source": "logo.jpeg [600,1450,1110,1900]",
+        "cross_check": "Blade 2.jpeg",
+        "domain_z_mm": [
+          -3,
+          3
+        ],
+        "repeat": "mirrored continuous photo sample",
+        "note": "five wood layers plus thin glue lines visible; individual ply thicknesses unmeasured"
+      }
+    },
+    "blade_edge_normal.jpg": {
+      "size": [
+        2048,
+        512
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "blade_edge_roughness.jpg": {
+      "size": [
+        2048,
+        512
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    },
+    "handle1_butt.jpg": {
+      "size": [
+        1536,
+        1114
+      ],
+      "provenance": "logo.jpeg complete end face, affine calibrated to 35.8658 x 26 mm; original medallion included."
+    },
+    "handle1_butt_clean.jpg": {
+      "size": [
+        1536,
+        1114
+      ],
+      "provenance": "Original end grain with medal occlusion filled from adjacent photo grain for separate medallion mesh."
+    },
+    "handle2_butt_rim_mask.png": {
+      "size": [
+        1536,
+        1114
+      ],
+      "provenance": "0.9 mm inward metric offset of actual CAD butt-face triangles."
+    },
+    "handle2_butt_clean.jpg": {
+      "size": [
+        1536,
+        1114
+      ],
+      "provenance": "Handle 2.jpeg clean end-cap quadrant, perspective-rectified and tiled; central core retained from supplied STEP / logo.jpeg. The unfinished photo has a continuous cap; this CAD-conforming split is a reconstruction."
+    },
+    "handle2_butt.jpg": {
+      "size": [
+        1536,
+        1114
+      ],
+      "provenance": "Photo-derived pale cap + five-ply edge + original transparent metal medallion."
+    },
+    "wood_grain_normal.jpg": {
+      "size": [
+        1024,
+        2048
+      ],
+      "provenance": "Estimated tangent-space OpenGL micro-normal from source-photo high-pass luminance; not measured surface height."
+    },
+    "wood_grain_roughness.jpg": {
+      "size": [
+        1024,
+        2048
+      ],
+      "provenance": "Estimated roughness from source-photo high-frequency luminance; baked illumination is not physically calibrated."
+    }
+  }
+}

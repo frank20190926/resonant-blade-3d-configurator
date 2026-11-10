@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RESONANT 3D Blade Configurator — Technical Proposal &amp; Fixed Quote (€550 EUR)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F5F3EE;--ink:#181715;--ink2:#5A564F;--rule:#D3CDC1;--tint:#ECE8DF;--red:#D42B1E;--wood:#7A2822;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--head:'Space Grotesk','IBM Plex Sans',sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 var(--sans)}
+.num,td.n,th.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:22px;height:52px;padding:0 24px;border-bottom:1px solid var(--ink);background:var(--paper)}
+.brand{font:700 20px/1 var(--head);letter-spacing:.34em}.brand i{font-style:normal;color:var(--red)}
+header nav{margin-left:auto;display:flex;gap:18px;align-items:center}
+header nav a.t{font:500 12px var(--mono);color:var(--ink2);text-decoration:none;letter-spacing:.04em}
+header nav a.t:hover{color:var(--red)}
+header nav a.b{font:600 12px/1 var(--head);letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--paper);background:var(--ink);padding:10px 14px;border:1px solid var(--ink)}
+header nav a.b:hover{background:var(--red);border-color:var(--red)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.hero{padding:54px 0 34px;border-bottom:1px solid var(--ink)}
+.hero .k{font:500 11px/1 var(--mono);letter-spacing:.1em;color:var(--red);text-transform:uppercase}
+h1{font:700 44px/1.08 var(--head);letter-spacing:-.025em;margin:14px 0 14px;max-width:820px}
+.hero p.lead{max-width:760px;color:var(--ink2);font-size:16.5px}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);margin-top:30px;border-top:1px solid var(--ink)}
+.facts div{padding:14px 14px 4px 0}
+.facts .l{font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;color:var(--ink2);text-transform:uppercase}
+.facts .v{font:700 30px/1.15 var(--head);letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.facts .s{font-size:12.5px;color:var(--ink2)}
+.hero .cta{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 12px/1 var(--head);letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--ink);padding:12px 16px;border:1px solid var(--ink)}
+.btn:hover{background:var(--ink);color:var(--paper)}.btn.solid{background:var(--ink);color:var(--paper)}.btn.solid:hover{background:var(--red);border-color:var(--red)}
+section{padding:44px 0 36px;border-bottom:1px solid var(--rule)}
+section>h2{display:flex;gap:14px;align-items:baseline;font:700 25px/1.2 var(--head);letter-spacing:-.015em;margin-bottom:6px}
+section>h2 .n{font:500 12px var(--mono);color:var(--red);letter-spacing:.04em}
+section>p.in{color:var(--ink2);max-width:780px;margin-bottom:18px}
+h3{font:600 15px/1.3 var(--head);letter-spacing:.03em;text-transform:uppercase;margin:24px 0 8px}
+p{max-width:800px;margin-bottom:10px}
+ul{margin:6px 0 12px 20px;max-width:800px}li{margin-bottom:4px}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:14px}
+th{font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--ink)}
+td{padding:9px 10px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap;padding-right:14px}
+tr.tot td{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);font-weight:600;background:var(--tint)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:34px}
+.col{border-top:1px solid var(--ink);padding-top:10px;min-width:0}
+.two td.n{white-space:normal}
+.col h3{margin-top:2px}
+.note{background:var(--tint);padding:12px 14px;max-width:800px;font-size:14px;margin:12px 0}
+.note b{font-weight:600}
+svg text{font-family:'IBM Plex Sans',sans-serif}
+.mono{font-family:var(--mono);font-size:.92em}
+footer{padding:30px 0 60px;color:var(--ink2);font-size:13px}
+@media(max-width:820px){.facts{grid-template-columns:1fr 1fr}.two{grid-template-columns:minmax(0,1fr)}h1{font-size:32px}header nav a.t{display:none}table{font-size:13px;display:block;max-width:100%;overflow-x:auto}td.n{white-space:normal}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">RESONANT<i>.</i></div>
+  <nav><a class="t" href="#price">Price</a><a class="t" href="#workflow">New wood designs</a><a class="t" href="#arch">WooCommerce</a><a class="t" href="#terms">Terms</a><a class="b" href="index.html">Open Live 3D Demo</a></nav>
+</header>
+
+<div class="wrap">
+<div class="hero">
+  <div class="k">Freelancer Contest #2800440 · Interactive 3D Table Tennis Blade Configurator</div>
+  <h1>One fixed price for the whole brief: €550 EUR, delivered in 10–14 days.</h1>
+  <p class="lead"><b>€500 contest prize covers Milestone 1 in full. Only €50 net remains, payable after final WooCommerce acceptance.</b> This page answers every point of the RESONANT project description: what is included, how a new wood design is created and published, what Resonant can do alone in WordPress, what needs our help, how the WooCommerce integration is built, and how payment is split over two milestones.</p>
+  <div class="facts">
+    <div><div class="l">Fixed total price</div><div class="v">€550 EUR</div><div class="s">Full scope · Brief §1–§7 included</div></div>
+    <div><div class="l">Timeline</div><div class="v">10–14 days</div><div class="s">2 milestones · €500 + €50</div></div>
+    <div><div class="l">Recurring costs</div><div class="v">€0</div><div class="s">No subscription, no external service</div></div>
+    <div><div class="l">Warranty</div><div class="v">90 days</div><div class="s">Free bug fixes after hand-over</div></div>
+  </div>
+  <div class="cta"><a class="btn solid" href="index.html">Try the live configurator</a><a class="btn" href="#price">Jump to quote</a></div>
+</div>
+
+<section id="demo">
+  <h2><span class="n">00</span>What the live demo already proves</h2>
+  <p class="in">The demo uses your Fusion 360 <span class="mono">Flared.step</span> geometry and your reference photographs. Both handle models are loaded once; switching between them only flips visibility, so it is instant. Camera matching is aligned to the supplied oblique photograph; it is not a calibrated photogrammetric survey.</p>
+  <table>
+    <tr><th>Brief requirement</th><th>In the demo</th></tr>
+    <tr><td>Handle bottom clearly inspectable (§5)</td><td>Orbit is unlocked over the full 0–180° range, plus a one-click <b>Handle Butt</b> view straight at the end cap with the “RESONANT SWISS MADE” medallion and the 5-ply end grain.</td></tr>
+    <tr><td>Free 360° rotation, zoom, standard views (§5)</td><td>7 camera presets, including Compare with Your Photo (Same Angle in 3D), with five locked photo comparisons. Touch and mouse.</td></tr>
+    <tr><td>Exploded layers with material name, thickness optional (§1)</td><td>Layer table per blade model. Thickness is shown only when the value is filled in (WAVE C demonstrates the empty case).</td></tr>
+    <tr><td>4 models, fixed construction, size not selectable (§1)</td><td>PALIS OFF, OPUS 1 ALL+, WAVE C OFF+, PULSE C DEF with predefined size, price and weight.</td></tr>
+    <tr><td>Handle shapes, 3 internal constructions, 2 finishes (§2)</td><td>All selectable; weight and price update live; oiled changes roughness and clearcoat of the 3D material.</td></tr>
+    <tr><td>Only manufacturable combinations (§2)</td><td>Rule engine disables invalid options and shows the reason (for example penhold on a carbon blade).</td></tr>
+    <tr><td>Plate, flag, face engraving (§4)</td><td>Handle 1 lens defaults ON; Handle 2 lens defaults OFF. Eight circular flag choices. Original S02025148 visibility toggle, plus separate custom laser text (16 characters) directly below it.</td></tr>
+    <tr><td>Live price, weight ±5 g (§4)</td><td>Footer updates on every change.</td></tr>
+    <tr><td>Marketing image export (§5)</td><td>Browser-side PNG up to 3840×2160 with studio or transparent background.</td></tr>
+    <tr><td>Shareable configuration (§6)</td><td>Every state is encoded in the <span class="mono">?cfg=</span> address parameter and restores on load.</td></tr>
+  </table>
+  <div class="note"><b>Honest status of the demo.</b> Only the flared handle geometry (<span class="mono">Flared.step</span>) and the PALIS blade have been supplied so far. In the demo, the other three blade models and the straight / anatomical / penhold shapes therefore reuse that geometry and say so on screen; their price, weight and layer data are already specific. The real geometry for those items is part of Milestone 1 once the Fusion 360 files arrive.</div>
+</section>
+
+<section id="price">
+  <h2><span class="n">01</span>Fixed total price and milestones</h2>
+  <p class="in">Brief §7 asks for confirmation that everything listed is inside the fixed price. It is.</p>
+  <table>
+    <tr><th>Milestone</th><th>Days</th><th>Deliverables</th><th class="n">EUR</th></tr>
+    <tr><td><b>M1 · 3D Configurator Core</b><br>100% covered by the €500 contest prize</td><td class="n">1–8</td><td>Fusion 360 STEP/F3D → GLB for all 4 blades (OPUS 1, PALIS, WAVE C, PULSE C) × all 4 handle shapes (Flared, Straight, Anatomical, Penhold). 10 initial handle wood designs. Exploded 5-ply + Solid / Partial / Maximal hollowing views. 4K PNG export. Live 8-Zone 3D Wood Builder, photo comparison, all four personalization details and share links.</td><td class="n">€500</td></tr>
+    <tr><td><b>M2 · WooCommerce &amp; Handover</b><br>Paid only after final WooCommerce acceptance</td><td class="n">9–14</td><td>Full WordPress / WooCommerce plugin, server-side price / weight / compatibility validation. Cart / Checkout / HPOS Order / Email attachment of config JSON + thumbnail + <span class="mono">?cfg=</span> reopen link. No-code WordPress Admin screens, full source code &amp; Blender / GLB handover, documentation and a <b>90-Day Free Bug-Fix Warranty</b>.</td><td class="n">€50</td></tr>
+    <tr class="tot"><td colspan="3">Total Fixed Price for Full Scope (Brief §1–§7), All-Inclusive</td><td class="n">550</td></tr>
+  </table>
+  <h3>Included in the fixed price</h3>
+  <ul>
+    <li>4 blade models, 4 handle shapes, 10 initial handle wood designs, 3 internal handle constructions, untreated and oiled finish.</li>
+    <li>Exploded layer view, plate / epoxy label, handle flag, face engraving, live price and weight with ±5 g tolerance, compatibility rules.</li>
+    <li>4K marketing PNG export, shareable configuration link, WooCommerce integration, admin tools, documentation, source code and 3D assets.</li>
+  </ul>
+  <h3>Additional package, quoted separately as requested in §3</h3>
+  <table>
+    <tr><th>Item</th><th class="n">Per design</th><th class="n">EUR</th></tr>
+    <tr><td>10 additional handle wood designs, adapted to all 4 handle shapes</td><td class="n">12</td><td class="n">100</td></tr>
+  </table>
+</section>
+
+<section id="workflow">
+  <h2><span class="n">02</span>How a new handle wood design is created and published</h2>
+  <p class="in">Brief §3 asks whether to work from photographs of a finished handle or from a modular system. We provide both and say which to use when.</p>
+  <div class="two">
+    <div class="col">
+      <h3>Workflow A · No-Code 8-Zone Modular Builder</h3>
+      <p><b>Recommended for everyday use.</b> Each Fusion 360 handle shape is prepared with eight independent material channels in six construction groups:</p>
+      <ul>
+        <li><b>Zone 1a / 1b</b> left and right body wings</li>
+        <li><b>Zone 2a / 2b</b> outer and centre cheek stripes (1–8 stripe layout)</li>
+        <li><b>Zone 3</b> centre core / Padauk gaps</li>
+        <li><b>Zone 4</b> single side flank stripe</li>
+        <li><b>Zone 5</b> butt end-cap wood</li>
+        <li><b>Zone 6</b> CAD-following rim inlay</li>
+      </ul>
+      <p>The live demo already synthesizes high-resolution, photo-grain textures and applies them directly to the CAD handle mesh. In the delivered WordPress Admin, Resonant picks a wood species per zone from a drop-down and saves. The same zone set is applied automatically to flared, straight, anatomical and penhold shapes.</p>
+      <table>
+        <tr><td>Resonant does</td><td>Uploads front and back flat photos of a new species once (reusable across all models); combines zones; publishes.</td></tr>
+        <tr><td>We do</td><td>Nothing for combinations of the supplied species, after Milestone 2.</td></tr>
+        <tr><td>Time</td><td class="n">&lt; 2 min per design</td></tr>
+        <tr><td>Cost</td><td class="n">€0</td></tr>
+      </table>
+      <p><b>Limits.</b> Stripes run straight along the handle and meet at straight borders. Diagonal splices, curved inlays or asymmetrical marquetry cannot be described by these straight longitudinal zones.</p>
+    </div>
+    <div class="col">
+      <h3>Workflow B · Photo-to-CAD UV Projection</h3>
+      <p><b>For complex or irregular designs.</b> Resonant sends 2 to 3 photographs of the finished handle (top, back, butt) together with the existing Fusion 360 shape. We register the photographs to the handle UV layout with our perspective-unwrap script, cut them to the handle boundary, and build the texture set.</p>
+      <table>
+        <tr><td>Resonant does</td><td>Photographs the handle flat on a neutral background, sharp, no strong shadows, a ruler in frame.</td></tr>
+        <tr><td>We do</td><td>Unwrap, register, crop to the handle zone, check end grain and edges in 3D, hand the finished asset over; Resonant publishes it from the same admin screen.</td></tr>
+        <tr><td>Time</td><td class="n">~30 min per design</td></tr>
+        <tr><td>Cost</td><td class="n">€12 / design · €100 for a batch of 10 across all 4 handle shapes</td></tr>
+      </table>
+      <p><b>Limits.</b> The photograph shows one specimen; the pattern is reproduced as photographed, not as a rule. Strong perspective, reflections or a handle photographed on a curved background reduce accuracy and may need a re-shoot.</p>
+    </div>
+  </div>
+  <div class="note"><b>Answer to “is it realistic to work from finished-handle photographs?”</b> Yes, as Approach B, and the live demo shows it: <b>Handle 2</b> (padauk, three hornbeam pinstripes, white oak butt cap) is registered from your <span class="mono">Handle 2.jpeg</span> inside the <span class="mono">102.00 mm</span> flared handle zone and does not run onto the blade face. Use <b>07 Compare with Your Photo (Same Angle in 3D)</b> in the demo to check the boundary.</div>
+  <h3>What needs a 3D preparation step</h3>
+  <table>
+    <tr><th>Task</th><th>Who</th><th class="n">Effort</th></tr>
+    <tr><td>New wood species (two flat reference photos)</td><td>Resonant, in WordPress</td><td class="n">~2 min</td></tr>
+    <tr><td>New combination of existing species by zones</td><td>Resonant, in WordPress</td><td class="n">&lt; 2 min</td></tr>
+    <tr><td>Irregular or inlaid pattern from photographs</td><td>Us, then Resonant publishes</td><td class="n">~30 min</td></tr>
+    <tr><td>New handle <i>shape</i> (new Fusion 360 geometry)</td><td>Resonant supplies CAD; we add the eight-channel UV preparation</td><td class="n">per shape, quoted on request</td></tr>
+    <tr><td>New blade model</td><td>Resonant supplies CAD; Resonant enters size, layers, price, weight in the admin</td><td class="n">CAD prep by us if needed</td></tr>
+  </table>
+</section>
+
+<section id="arch">
+  <h2><span class="n">03</span>WooCommerce plugin architecture</h2>
+  <p class="in">The 3D viewer runs in the browser. Everything that decides money or manufacturing is decided on the server.</p>
+  <svg viewBox="0 0 1000 300" width="100%" role="img" aria-label="Architecture: browser WebGL, WordPress REST validation, WooCommerce cart order and e-mail" style="max-width:1000px;border:1px solid var(--ink);background:#fff">
+    <g fill="none" stroke="#181715" stroke-width="1.5">
+      <rect x="24" y="30" width="270" height="240"/><rect x="365" y="30" width="270" height="240"/><rect x="706" y="30" width="270" height="240"/>
+      <path d="M294 110H365M294 190H365M635 110H706M635 190H706"/>
+    </g>
+    <g fill="#181715"><path d="M365 110l-9-4v8zM706 110l-9-4v8zM294 190l9-4v8zM635 190l9-4v8z"/></g>
+    <g font-size="12" fill="#5A564F" font-family="JetBrains Mono, monospace"><text x="36" y="52">BROWSER</text><text x="377" y="52">WORDPRESS PLUGIN</text><text x="718" y="52">WOOCOMMERCE</text>
+      <text x="300" y="104">configuration JSON</text><text x="300" y="206">price · weight · OK</text><text x="641" y="104">validated item</text><text x="641" y="206">order id</text></g>
+    <g font-size="14" fill="#181715">
+      <text x="36" y="86" font-weight="600">Three.js WebGL2 viewer</text><text x="36" y="108">GLB models, PBR wood textures</text><text x="36" y="130">Orbit 360°, 7 view presets</text><text x="36" y="152">Live price / weight preview</text><text x="36" y="174">Exploded layers, handle butt</text><text x="36" y="196">4K transparent PNG export</text><text x="36" y="218">?cfg= share link restore</text>
+      <text x="377" y="86" font-weight="600">REST route + admin tables</text><text x="377" y="108">Rebuilds price from admin tables</text><text x="377" y="130">Weight from component weights</text><text x="377" y="152">Exclusion rules (invalid = 400)</text><text x="377" y="174">Ignores any client-sent price</text><text x="377" y="196">Stores config, short code, image</text><text x="377" y="218">Admin: models, woods, rules</text>
+      <text x="718" y="86" font-weight="600">Cart · Order · E-mail</text><text x="718" y="108">Real cart and checkout</text><text x="718" y="130">Line item with full selections</text><text x="718" y="152">Preview thumbnail on the item</text><text x="718" y="174">Admin order view, customer mail</text><text x="718" y="196">HPOS compatible</text><text x="718" y="218">Re-open order config in viewer</text>
+    </g>
+  </svg>
+  <h3>Server-side checks, in order</h3>
+  <ol style="margin:6px 0 12px 20px;max-width:800px"><li>Every selected component exists and is enabled.</li><li>Compatibility rules from the admin pass; otherwise the request is rejected.</li><li>Price = model base price + sum of component prices, computed on the server.</li><li>Weight = model weight + sum of component weights; shown with ±5 g.</li><li>Configuration is stored with a short code and written to the cart item, order meta and e-mails.</li></ol>
+  <h3>Admin screens (no code)</h3>
+  <table>
+    <tr><th>Screen</th><th>Fields</th></tr>
+    <tr><td>Blade models</td><td>Name, size S / M / L / DEF, GLB, base price, weight, layer list (material name, thickness optional)</td></tr>
+    <tr><td>Wood species</td><td>Front and back flat photos, normal / roughness maps (optional), display name</td></tr>
+    <tr><td>Handle designs</td><td>Zone-to-species assignment, or a prepared texture set (Approach B), price, weight</td></tr>
+    <tr><td>Handle shapes and internal constructions</td><td>GLB, price, weight</td></tr>
+    <tr><td>Labels, flags, engraving</td><td>Image files, price, weight; engraving price and character limit</td></tr>
+    <tr><td>Compatibility rules</td><td>Pair rules “A excludes B” per model, shape, construction, wood</td></tr>
+  </table>
+</section>
+
+<section id="render">
+  <h2><span class="n">04</span>3D presentation and image output</h2>
+  <p class="in">Answers to the clarifications requested in brief §5.</p>
+  <table>
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr><td>Export resolution</td><td class="n">up to 3840×2160 (4K) in the browser; capped by the device GPU limit and reduced automatically on weak mobile GPUs</td></tr>
+    <tr><td>Backgrounds</td><td>Studio background or transparent PNG</td></tr>
+    <tr><td>In-browser or separate workflow?</td><td>In-browser, one click, no server load. A separate photo-render (Blender Cycles) workflow is possible for hero images, kept outside the configurator so normal customization is never slowed.</td></tr>
+    <tr><td>Mobile performance</td><td>Single optimized GLB per shape, compressed textures, pixel ratio capped at 2, no real-time shadows.</td></tr>
+    <tr><td>Acrylic stand</td><td>Not included, as stated in the brief.</td></tr>
+  </table>
+</section>
+
+<section id="terms">
+  <h2><span class="n">05</span>Exclusions, assumptions, support and ownership</h2>
+  <div class="two">
+    <div class="col">
+      <h3>Assumptions</h3>
+      <ul>
+        <li>Resonant supplies Fusion 360 files for the 4 blades and 4 handle shapes that are STEP-exportable and to scale. <span class="mono">Flared.step</span> and <span class="mono">Flared.f3d</span> are already in hand.</li>
+        <li>Two flat reference photographs (front and back) per wood species: even daylight or softbox, at least 3000 px on the long side, no flash glare.</li>
+        <li>Resonant provides flag and label image files.</li>
+        <li>WordPress 6.x, WooCommerce 8+, PHP 8.1+, HTTPS; staging access for the test order.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Exclusions</h3>
+      <ul>
+        <li>New handle shapes or blade geometry beyond the 4 + 4 listed; CAD repair of files that are not watertight.</li>
+        <li>Extra wood designs beyond the 10 initial ones (quoted: €12 each, €100 for 10).</li>
+        <li>Payment gateway setup, theme redesign, multilingual translation, tax and shipping configuration.</li>
+        <li>Hosting, domain, and any photography of the wood samples.</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Costs, support and ownership</h3>
+  <table>
+    <tr><td>Hosting, subscription, licences</td><td>None required beyond Resonant’s existing WordPress hosting. The 3D library (Three.js) is MIT-licensed, fonts are open-licensed, no paid third-party service is used.</td></tr>
+    <tr><td>Warranty</td><td>90 days after final hand-over: bug fixes free of charge.</td></tr>
+    <tr><td>Ownership</td><td>All source code, 3D assets, editable files, setup and admin documentation belong to Resonant on final payment.</td></tr>
+    <tr><td>Final acceptance</td><td>Desktop and mobile test; one WooCommerce staging test order; correct price, weight and options; live demonstration of adding a new blade model and a new wood design.</td></tr>
+  </table>
+  <p>The scope and timeline are sized to the budget range discussed in the contest comments. Payment follows the two Freelancer milestones above: €500 from the contest award + €50 only after final WooCommerce acceptance. The 10–14 day delivery period starts when the remaining source CAD and staging access are available. There are no additional fees for the agreed brief §1–§7 scope.</p>
+</section>
+
+<footer>RESONANT 3D Blade Configurator · REV.02 · Proposal for Contest #2800440 · <a href="index.html" style="color:var(--ink)">Live demo</a></footer>
+</div>
+</body>
+</html>
